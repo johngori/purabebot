@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ぷらべぼっと！</title>
+    <link rel="stylesheet" href="index.css">
+    <link href="https://fonts.googleapis.com/css?family=Sawarabi+Gothic" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="./jquery-3.5.1.min.js"></script>
+</head>
+<body>
+
+    <div class="main">
+        <div id="status">
+            <ul id="status-text">
+                <li class="text" id="text1"></li>
+                <li class="text" id="text2"></li>
+            </ul>
+        </div>
+        <div class="info">
+            <div class="name">
+                <div class="room-name-text">Room</div>
+                <div id="room-name"></div>
+            </div>
+            <div class="pass">
+                <div class="room-pass-text">Pass</div>
+                <div id="room-pass"></div>
+            </div>
+        </div>
+
+        <ul id="member">
+        </ul>
+
+    </div>
+
+    <script src="./index.js"></script>
+</body>
+</html>

@@ -1,0 +1,189 @@
+body {
+  margin: 0;
+  padding: 10px 2% 0 2%;
+}
+
+label {
+  font-size: 12px;
+}
+
+.connect-form input {
+  width: 98%;
+}
+
+.auth-url {
+  text-align: right;
+  font-size: 12px;
+}
+
+.auth-url p { 
+  margin: 0;
+  cursor: pointer;
+  color: rgb(255, 158, 47);
+  text-decoration: underline;
+}
+
+#btn-connect {
+  width: 98%;
+}
+
+.connect-form {
+  margin-bottom: 10px;
+}
+
+.error-log {
+  width: 98%;
+  margin-right: 5px;
+  height: 25px;
+  text-align: left;
+  padding: 10px;
+  border-radius: 10px;
+  background-color: rgba(255, 0, 0, 0.3);
+  color: red;
+  display: none;
+}
+
+.error-log p {
+  display: inline;
+  padding: 0;
+}
+
+.connect-log{
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: none;
+  font-size: 10px;
+}
+
+#server-url {
+  position: absolute;
+  cursor: pointer;
+  top: 10px;
+  left: 545px;
+  color: rgb(255, 158, 47);
+  text-decoration: underline;
+  display: none;
+}
+
+.connect-log.err {
+  color: red;
+}
+
+.connect-contents {
+  visibility: hidden;
+  height: 0;
+}
+
+.connect-contents.on {
+  visibility: visible;
+  margin-top: 25px;
+  height: 500px;
+  overflow: hidden;
+}
+
+.connect-contents .left-contents {
+  float: left;
+  width: 400px;
+  height: 100%;
+}
+
+.connect-contents .right-contents {
+  float: left;
+  width: 304px;
+  height: 100%;
+}
+
+.button-container button {
+  text-align: center;
+  width: 100px;
+}
+
+#containts-info.button-container button {
+  margin-bottom: 15px;
+}
+
+.player-count {
+  overflow: hidden;
+}
+
+.player-count>div{
+  float: left;
+  margin-right: 20px;
+}
+
+.rest-member {
+  margin-top: 15px;
+  width: 100%;
+  height: 300px;
+}
+
+.rest-member p {
+  margin: 0px;
+}
+
+.list-container {
+  overflow: auto;
+  width: 80%;
+  height: 246px;
+  border: 2px solid black;
+}
+
+#btn-init {
+  margin-right: 118px;
+}
+
+ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.list-rest li{
+  cursor: pointer;
+}
+
+.list-rest li:hover {
+  background-color: rgb(204, 204, 204);
+}
+
+.list-rest li:hover::after {
+  content: "　：パス";
+}
+
+.list-member li{
+  cursor: pointer;
+}
+
+.list-member li:hover {
+  background-color: rgb(204, 204, 204);
+}
+
+.list-member li:hover::after {
+  content: "　：削除";
+}
+
+li {
+  padding-left: 10px;
+}
+
+.right-contents .member {
+  height: 470px;
+  width: 300px;
+  border: solid 2px black;
+  overflow: auto;
+}
+
+.add-member {
+  height: 26px;
+  overflow: hidden;
+}
+
+.add-member * {
+  float: left;
+}
+
+#fm-add-member {
+  width: 253px;
+  height: 20px;
+}

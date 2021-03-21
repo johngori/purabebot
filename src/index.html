@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>プラべボット！</title>
+    <link rel="stylesheet" href="index.css">
+  </head>
+  <body>
+    <div id="setting">
+      <div class="error-log" id="text-error">
+      </div>
+      <div class="connect-form" id="connect-form">
+        <div class="form-label">
+          <label for="bot-name">ボットのチャンネル名 or 自分のチャンネル名</label>
+        </div>
+        <div class="form-input">
+          <input type="text" id="bot-name">
+        </div>
+  
+        <div class="form-label">
+          <label for="channel-name">使用する配信チャンネル名</label>
+        </div>
+        <div class="form-input">
+          <input type="text" id="channel-name">
+        </div>
+  
+        <div class="form-label">
+          <label for="oauth-pass">Twitch Chat OAuth Password</label>
+        </div>
+        <div class="form-input">
+          <input type="password" placeholder="outh:xxxx~" id="oauth-pass">
+        </div>
+        <div class="auth-url">
+          <p id="get-token">トークンの取得</p>
+        </div>
+      </div>
+      <button id="btn-connect">接続</button>
+    </div>
+
+    <div class="connect-log" id="connect-log"></div>
+    <div id="server-url">http://localhost:3000/</div>
+    <div class="connect-contents" id="connect-contents">
+
+      <div class="left-contents">
+        <div class="button-container" id="containts-info">
+          <button id="btn-room">部屋立て</button>
+          <button id="btn-refresh" disabled>更新</button>
+          <button id="btn-close" disabled>受付終了</button>
+        </div>
+        <div class="room-name">
+          <div class="form-label">
+            <label for="fm-room-name">部屋名</label>
+          </div>
+          <div class="form-input">
+            <input type="text" id="fm-room-name" maxlength="20">
+          </div>
+        </div>
+        <div class="room-pass">
+          <div class="form-label">
+            <label for="fm-room-pass">パスワード</label>
+          </div>
+          <div class="form-input">
+            <input type="text" id="fm-room-pass" maxlength="20">
+          </div>
+        </div>
+        <div class="player-count">
+          <div class="play-count">
+            <div class="form-label">
+              <label for="fm-play-count">プレイ人数</label>
+            </div>
+            <div class="form-input">
+              <input type="number" min="1" max="10" value="6" id="fm-play-count">
+            </div>
+          </div>
+          <div class="rest-count">
+            <div class="form-label">
+              <label for="fm-rest-count">休憩枠</label>
+            </div>
+            <div class="form-input">
+              <input type="number" min="0" max="5" value="3" id="fm-rest-count">
+            </div>
+          </div>
+        </div>
+        <div class="rest-member">
+          <p>休憩メンバー（メンバークリックで休憩をパス）</p>
+          <div class="list-container">
+            <ul class="list-rest" id="rest-id">
+            </ul>
+          </div>
+          <div class="button-container">
+            <button id="btn-init">リセット</button>
+            <button id="btn-next">次へ</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="right-contents">
+        <div class="member">
+          <ul class="list-member" id="member-list">
+          </ul>
+        </div>
+        <div class="add-member">
+          <input type="text" id="fm-add-member" maxlength="20">
+          <button id="btn-add">追加</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="./twitch.js"></script>
+  </body>
+</html>

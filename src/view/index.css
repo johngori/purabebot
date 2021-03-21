@@ -1,0 +1,111 @@
+*{
+    padding: 0;
+    margin: 0;
+    font-family: 'Sawarabi Gothic';
+}
+.main{
+    width: 400px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    background-color: rgba(2, 9, 119, 0.8);
+    color: rgb(255, 255, 236);
+    overflow: hidden;
+    font-size: 24px;
+    border-radius: 20px;
+    border: 3px solid rgba(224, 224, 224, 0.8);
+}
+
+.info {
+    overflow: hidden;
+    height: 0;
+    background-color: rgba(241, 224, 255, 0.8);
+    color:  rgba(2, 9, 119);
+    /* text-shadow: 0px 1px 0 white, 0px -1px 0 white, 1px 0px 0 white, -1px 0px 0 white; */
+    transition: all 1s;
+}
+
+.info.on {
+    height: 90px;
+    font-size: 30px;
+    border-bottom: 3px solid rgba(34, 34, 34, 0.8);
+    transition: all 1s;
+}
+
+.info.on.passoff {
+    height: 45px;
+    transition: all 0.5s;
+}
+
+.room-name-text {
+    float: left;
+    margin-left: 10px;
+    padding-right: 10px;
+    width: 90px;
+}
+
+.room-pass-text {
+    float: left;
+    margin-left: 10px;
+    padding-right: 10px;
+    width: 90px;
+}
+
+#status{
+    text-align: center;
+    font-size: 20px;
+    height: 30px;
+}
+
+#status.open {
+    font-size: 30px;
+    height: 45px;
+    transition: all 1s;
+}
+
+#status.open.full {
+    font-size: 30px;
+    transition: all 1s;
+}
+
+#status.close {
+    font-size: 30px;
+    height: 45px;
+    transition: all 1s;
+}
+
+#member {
+    font-size: 30px;
+    margin: 10px;
+    height: 0;
+    transition: height 1s;
+}
+
+#member.on {
+    transition: all 1s;
+}
+
+#member li {
+    overflow: hidden;
+    width: 0px;
+    margin-top: 10px;
+    background-color: rgba(0, 0, 0, 0.4);
+    transition: width 1s;
+    height: 50px;
+    border-radius: 10px;
+}
+
+#member li.on {
+    width: 360px;
+    padding-left: 20px;
+    transition: width 1s;
+}
+
+.pass {
+    display: block;
+}
+
+.pass.off {
+    display: none;
+}
+
+.wf-sawarabigothic { font-family: "Sawarabi Gothic"; }

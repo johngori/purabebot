@@ -1,0 +1,84 @@
+{
+  "name": "purabebot",
+  "productName": "purabebot",
+  "version": "1.1.1",
+  "description": "My Electron application description",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "publish": "electron-forge publish",
+    "lint": "echo \"No linting configured\"",
+    "build-win": "electron-builder --win --x64"
+  },
+  "keywords": [],
+  "author": {
+    "name": "johngori",
+    "email": "johngori03@gmail.com"
+  },
+  "license": "MIT",
+  "config": {
+    "forge": {
+      "packagerConfig": {},
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "test007"
+          }
+        },
+        {
+          "name": "@electron-forge/maker-zip",
+          "platforms": [
+            "darwin"
+          ]
+        },
+        {
+          "name": "@electron-forge/maker-deb",
+          "config": {}
+        },
+        {
+          "name": "@electron-forge/maker-rpm",
+          "config": {}
+        }
+      ]
+    }
+  },
+  "dependencies": {
+    "electron-squirrel-startup": "^1.0.0",
+    "electron-store": "^7.0.0",
+    "express": "^4.17.1",
+    "socket.io": "^3.1.0",
+    "tmi.js": "^1.7.1"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^6.0.0-beta.54",
+    "@electron-forge/maker-deb": "^6.0.0-beta.54",
+    "@electron-forge/maker-rpm": "^6.0.0-beta.54",
+    "@electron-forge/maker-squirrel": "^6.0.0-beta.54",
+    "@electron-forge/maker-zip": "^6.0.0-beta.54",
+    "electron": "11.2.1",
+    "electron-builder": "^22.9.1"
+  },
+  "build": {
+    "productName": "purabebot",
+    "appId": "johngori.purabebot",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src",
+      "package.json",
+      "package-lock.json"
+    ],
+    "win": {
+      "icon": "src/icon.ico",
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}
