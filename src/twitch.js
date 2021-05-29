@@ -7,6 +7,7 @@ const form = document.getElementById('connect-form');
 const textError = document.getElementById("text-error");
 const connectLog = document.getElementById("connect-log");
 const serverUrl = document.getElementById("server-url");
+const btnShare = document.getElementById("btn-share");
 const connectContents = document.getElementById("connect-contents");
 const btnRoom = document.getElementById("btn-room");
 const btnRefresh = document.getElementById("btn-refresh");
@@ -25,6 +26,7 @@ var restList = document.getElementById("rest-id").children
 var liMenberList = document.getElementById("member-list").children
 
 const { ipcRenderer, remote } = require('electron');
+const { shell } = require('electron');
 const express = require('express');
 const { stringify } = require('querystring');
 const app = express();
@@ -117,6 +119,7 @@ btnRoom.onclick = function() {
         this.innerText = "部屋立て"
         btnRefresh.disabled = true;
         btnClose.disabled = true;
+        btnShare.disabled = true;
         btnClose.innerText ="受付終了";
     } else {
         msg = roomCheck();
@@ -131,6 +134,7 @@ btnRoom.onclick = function() {
             this.innerText = "部屋削除"
             btnRefresh.disabled = false;
             btnClose.disabled = false;
+            btnShare.disabled = false;
             btnClose.innerText = "受付終了";
     } else {
             this.disabled = false;
@@ -193,6 +197,19 @@ btnNext.onclick = function() {
     io.emit('refresh', info);
 }
 
+//ツイートで募集ボタン
+btnShare.onclick = function() {
+    var tweetText = 'ただいまプラべ募集中！'
+    if(info.members.length == info.maxMember){
+        tweetText = 'ただいまプラべ満席です…%0A空き次第のご案内となります。'
+    } else if(info.members.length < info.minMember){
+        tweetText += '@ ' + (info.minMember - info.members.length) + '～' + (info.maxMember - info.members.length)
+    } else {
+        tweetText += '休憩枠 @ ' + (info.maxMember - info.members.length)
+    }
+    var url = '%0A%0Ahttps://www.twitch.tv/' + arrConfig.mychannel
+    shell.openExternal('https://twitter.com/intent/tweet?text=' + tweetText + url)
+}
 
 //URL押下処理
 serverUrl.onclick = function() {
@@ -254,6 +271,7 @@ function connectTwitch(botUserName, channelName, botOAuth){
             connectLog.innerText = arrConfig['mychannel'] + "に接続しました。";
             serverUrl.style.display = "block";
             serverUrl.innerText = "http://localhost:" + port + "/";
+            btnShare.style.display = "block";
             connectContents.classList.add("on");
             setServer();
             ipcRenderer.send('sendData', arrConfig);
