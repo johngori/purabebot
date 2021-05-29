@@ -31,6 +31,7 @@ const express = require('express');
 const { stringify } = require('querystring');
 const app = express();
 const server = require('http').createServer(app);
+const cron = require('node-cron');
 var io = require('socket.io')(server);
 const port = 3000;
 var minMember;
@@ -600,3 +601,9 @@ function setServer(){
 
 }
 
+cron.schedule('*/10 * * * *', ()=> {
+    console.log('TEST 定期')
+    if(info.joinable){
+        client.say(channelName, responseHelp());
+    }
+})
