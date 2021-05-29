@@ -601,8 +601,8 @@ function setServer(){
 
 }
 
+//v1.2.0 10毎にHELP実行
 cron.schedule('*/10 * * * *', ()=> {
-    console.log('TEST 定期')
     if(info.joinable){
         client.say(channelName, responseHelp());
     }
