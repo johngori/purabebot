@@ -287,6 +287,9 @@ function connectTwitch(botUserName, channelName, botOAuth){
         if(message.toLowerCase() === '!clear' && tags.username === channelName) {
             client.say(channel, initData());
         }
+        if(message.toLowerCase() === '!room' || message.toLowerCase() === '!r' ) {
+            client.say(channel, displayRoom());
+        }
         if(!message.toLowerCase().indexOf('!room ') && tags.username === channelName) {
             client.say(channel, setRoomName(message.split(' ')[1]));
         }
@@ -404,6 +407,19 @@ function initData(){
     io.emit('refresh', info);
     setMemberList();
     return 'プラべの受付データを初期化しました。'
+}
+function displayRoom(){
+    var message = '';
+    if(!open){
+        message = '受付を開始していません。';
+    } else {
+        if(info.password == ''){
+            message = '部屋名「' + info.roomName + '」、パスワードはありません。'
+        } else {
+            message = '部屋名「' + info.roomName + '」、パスワード「' + info.password + '」'
+        }
+    }
+    return message;
 }
 function setRoomName(rn){
     var message = '';
