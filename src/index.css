@@ -50,10 +50,17 @@ label {
 
 .connect-log{
   position: absolute;
-  top: 10px;
+  top: 8px;
   left: 10px;
   display: none;
   font-size: 10px;
+}
+
+#btn-share {
+  position: absolute;
+  top: 6px;
+  left: 415px;
+  display: none;
 }
 
 #server-url {
