@@ -168,3 +168,4 @@ dist/win-unpacked/resources/elevate.exe
 dist/win-unpacked/swiftshader/libEGL.dll
 dist/win-unpacked/swiftshader/libGLESv2.dll
 パッケージ化.txt
+scripts/build.js
