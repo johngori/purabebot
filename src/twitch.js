@@ -199,6 +199,7 @@ btnNext.onclick = function() {
 }
 
 //v1.2.0 ツイートで募集ボタン
+//v1.2.1 ハッシュタグ追加
 btnShare.onclick = function() {
     var tweetText = 'ただいまプラべ募集中！'
     if(info.members.length == info.maxMember){
@@ -209,7 +210,7 @@ btnShare.onclick = function() {
         tweetText += '休憩枠 @ ' + (info.maxMember - info.members.length)
     }
     var url = '%0A%0Ahttps://www.twitch.tv/' + arrConfig.mychannel
-    shell.openExternal('https://twitter.com/intent/tweet?text=' + tweetText + url)
+    shell.openExternal('https://twitter.com/intent/tweet?text=' + tweetText + url + '&hashtags=ぷらべぼっと')
 }
 
 //URL押下処理
