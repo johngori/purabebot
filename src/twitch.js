@@ -128,7 +128,7 @@ btnRoom.onclick = function() {
             roomName = fmRoom.value;
             password = fmPass.value;
             client.say(channelName, openMatch(roomName, password, cntPlayer.value, cntRest.value));
-            addMember(channelName); 
+            addMember(channelName);
             connectLog.classList.remove("err");
             connectLog.innerText = "受付を開始しました！"
             this.disabled = false;
@@ -198,7 +198,7 @@ btnNext.onclick = function() {
     io.emit('refresh', info);
 }
 
-//ツイートで募集ボタン
+//v1.2.0 ツイートで募集ボタン
 btnShare.onclick = function() {
     var tweetText = 'ただいまプラべ募集中！'
     if(info.members.length == info.maxMember){
@@ -508,14 +508,17 @@ function setMemberList(){
 }
 //コンソールでメンバー追加処理
 //v1.0.1 チャットで参加通知を表示
+//v1.2.1 trimを追加→手入力時に削除されないバグを解消
 function fncAddMember(){
     var text = "";
-    if(fmAddMember.value == "") {
+    var addUserName = fmAddMember.value
+    addUserName = addUserName.trim()
+    if(addUserName == "") {
         connectLog.classList.add("err");
         connectLog.innerText = "追加する方の名前を入力してください。"
         return false;
     }
-    text = addMember(fmAddMember.value);
+    text = addMember(addUserName);
     if(text.indexOf('参加を受け付けました') != -1){
         client.say(channelName, text);
     } else {
@@ -601,7 +604,7 @@ function setServer(){
 
 }
 
-//v1.2.0 10毎にHELP実行
+//v1.2.0 10分毎にHELP実行
 cron.schedule('*/10 * * * *', ()=> {
     if(info.joinable){
         client.say(channelName, responseHelp());
