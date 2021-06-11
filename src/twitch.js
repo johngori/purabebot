@@ -50,6 +50,7 @@ var channelName;
 var currentRestCnt = 0;
 var currentRestMembers = [];
 var restMemberQueue = [];
+var tglHelp = true;
 
 //ipcでconfig.jsからデータ取得
 ipcRenderer.send('asynchronous-message', 'getData');
@@ -177,6 +178,11 @@ btnClose.onclick = function() {
         this.innerText = "受付終了";
     }
     this.disabled = false;
+}
+
+//v1.2.1 ヘルプのチャットを自動投稿するかのチェックの確認
+function helpChange(checked) {
+    tglHelp = checked;
 }
 
 //リセットボタン処理
@@ -598,7 +604,6 @@ function setServer(){
         io.emit('refresh', info);
     });
 
-
     server.listen(port, function(){
         console.log('server listening. Port:' + port);
     })
@@ -606,8 +611,10 @@ function setServer(){
 }
 
 //v1.2.0 10分毎にHELP実行
-cron.schedule('*/10 * * * *', ()=> {
-    if(info.joinable){
+//v1.2.1 15分毎に変更
+//v1.2.1 helpのトグルボタン対応
+cron.schedule('*/15 * * * *', ()=> {
+    if(tglHelp && info.joinable){
         client.say(channelName, responseHelp());
     }
 })
