@@ -100,8 +100,8 @@ btConnect.onclick = function() {
     fmMyChannel.setAttribute("disabled", true);
     fmOAuth.setAttribute("disabled", true);
     //ipcでindex.jsにデータ送信
-    let botChannel = fmBotName.value;
-    channelName = fmMyChannel.value;
+    let botChannel = fmBotName.value.toLowerCase();
+    channelName = fmMyChannel.value.toLowerCase();
     let authpass = fmOAuth.value;
     arrConfig = {'botname': botChannel, 'mychannel': channelName, 'oauth': authpass}
     connectTwitch(botChannel, channelName, authpass);
@@ -239,7 +239,7 @@ btnAddMember.onclick = function() {
 }
 
 
-
+// v1.3.1 モデレータ権限でも全ての制御を可能に変更
 function connectTwitch(botUserName, channelName, botOAuth){
 
     client = new tmi.Client({
@@ -286,41 +286,54 @@ function connectTwitch(botUserName, channelName, botOAuth){
         }
     });
     client.on('message', (channel, tags, message, self) => {
+        const msg = message.toLowerCase();
         if(self) return;
-        if(message.toLowerCase() === '!join' || message.toLowerCase() === '!j' ) {
-            client.say(channel, addMember(tags.username));
-            checkStart();
+        switch(msg){
+            case '!j':
+            case '!join':
+                client.say(channel, addMember(tags.username));
+                checkStart();
+                break;
+            case '!l':
+            case '!leave':
+                client.say(channel, removeMember(tags.username));
+                break;
+            case '!h':
+            case '!help':
+                client.say(channel, responseHelp());
+                break;
+            case '!r':
+            case '!room':
+                client.say(channel, displayRoom());
+                break;
+            case '!close':
+                if(tags.username === channelName || tags.mod){
+                    client.say(channel, closeMatch());
+                }
+                break;
+            case '!clear':
+                if(tags.username === channelName || tags.mod){
+                    client.say(channel, initData());
+                }
+                break;
         }
-        if(message.toLowerCase() === '!leave' || message.toLowerCase() === '!l' ) {
-            client.say(channel, removeMember(tags.username));
-        }
-        if(message.toLowerCase() === '!help' || message.toLowerCase() === '!h' ) {
-            client.say(channel, responseHelp());
-        }
-        if(!message.toLowerCase().indexOf('!add ') && tags.username === channelName){
-            client.say(channel, addMember(message.split(' ')[1]));
-            checkStart();
-        }
-        if(!message.toLowerCase().indexOf('!remove ') && tags.username === channelName){
-            client.say(channel, removeMember(message.split(' ')[1]));
-        }
-        if(!message.toLowerCase().indexOf('!open ') && tags.username === channelName) {
-            client.say(channel, openMatch(message.split(' ')[1], message.split(' ')[2]));
-        }
-        if(message.toLowerCase() === '!close' && tags.username === channelName) {
-            client.say(channel, closeMatch());
-        }
-        if(message.toLowerCase() === '!clear' && tags.username === channelName) {
-            client.say(channel, initData());
-        }
-        if(message.toLowerCase() === '!room' || message.toLowerCase() === '!r' ) {
-            client.say(channel, displayRoom());
-        }
-        if(!message.toLowerCase().indexOf('!room ') && tags.username === channelName) {
-            client.say(channel, setRoomName(message.split(' ')[1]));
-        }
-        if(!message.toLowerCase().indexOf('!pass ') && tags.username === channelName) {
-            client.say(channel, setPassword(message.split(' ')[1]));
+        if(tags.username === channelName || tags.mod){
+            if(!msg.indexOf('!add ')){
+                client.say(channel, addMember(message.split(' ')[1]));
+                checkStart();
+            }
+            if(!msg.indexOf('!remove ')){
+                client.say(channel, removeMember(message.split(' ')[1]));
+            }
+            if(!msg.indexOf('!open ')) {
+                client.say(channel, openMatch(message.split(' ')[1], message.split(' ')[2]));
+            }
+            if(!msg.indexOf('!room ')) {
+                client.say(channel, setRoomName(message.split(' ')[1]));
+            }
+            if(!msg.indexOf('!pass ')) {
+                client.say(channel, setPassword(message.split(' ')[1]));
+            }
         }
     });
 }
@@ -387,10 +400,11 @@ function openMatch(rn, pa, min, rest){
         maxMember = minMember + parseInt(rest);
         if (pa === undefined || pa === ""){
             password = '';
+            message = 'プラべの受付を開始します！　部屋名：' + roomName + '、パス：なし　参加される方は「!join」、参加をキャンセルされる方は「!leave」と入力ください。';
         } else {
             password = pa;
+            message = 'プラべの受付を開始します！　部屋名：' + roomName + '、パス：' + password +'　参加される方は「!join」、参加をキャンセルされる方は「!leave」と入力ください。';
         }
-        message = 'プラべの受付を開始します！　部屋名：' + roomName + '、パス：' + password +'　参加される方は「!join」、参加をキャンセルされる方は「!leave」と入力ください。';
         setMemberList();
         info = {open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers};
         io.emit('refresh', info);
