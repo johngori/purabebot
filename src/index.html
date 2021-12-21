@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>プラべボット！</title>
+    <title>ぷらべぼっと！</title>
     <link rel="stylesheet" href="index.css">
   </head>
   <body>
@@ -10,20 +10,21 @@
       <div class="error-log" id="text-error">
       </div>
       <div class="connect-form" id="connect-form">
+        
         <div class="form-label">
-          <label for="bot-name">ボットのチャンネル名 or 自分のチャンネル名</label>
+          <label for="channel-name">使用する配信チャンネル名（英数小文字のみ）</label>
+        </div>
+        <div class="form-input">
+          <input type="text" id="channel-name" placeholder="https://www.twitch.tv/[こちらの値]">
+        </div>
+
+        <div class="form-label">
+          <label for="bot-name">自分のチャンネル名 or 自身のボットのチャンネル名（トークンを取得したアカウントID）</label>
         </div>
         <div class="form-input">
           <input type="text" id="bot-name">
         </div>
-  
-        <div class="form-label">
-          <label for="channel-name">使用する配信チャンネル名</label>
-        </div>
-        <div class="form-input">
-          <input type="text" id="channel-name">
-        </div>
-  
+        
         <div class="form-label">
           <label for="oauth-pass">Twitch Chat OAuth Password</label>
         </div>
