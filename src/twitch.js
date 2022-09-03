@@ -363,7 +363,7 @@ serverUrl.onclick = function() {
 }
 
 pluginUrl.onclick = function() {
-    urlopen("https://bakkesplugins.com/plugins/view/107")
+    urlopen("https://note.com/johngori/n/ne7dcd4773534")
 }
 
 //inputのEnter処理
