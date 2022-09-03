@@ -7,6 +7,7 @@ const form = document.getElementById('connect-form');
 const textError = document.getElementById("text-error");
 const connectLog = document.getElementById("connect-log");
 const serverUrl = document.getElementById("server-url");
+const pluginUrl = document.getElementById("plugin-url")
 const btnShare = document.getElementById("btn-share");
 const connectContents = document.getElementById("connect-contents");
 const btnRoom = document.getElementById("btn-room");
@@ -22,6 +23,13 @@ const btnAddMember = document.getElementById("btn-add");
 const btnNext = document.getElementById("btn-next");
 const btnReset = document.getElementById("btn-init");
 const restMemberList = document.getElementById("rest-id")
+const btnBlueInGoal = document.getElementById("blue-in-goal")
+const btnBlueLeftBack = document.getElementById("blue-left-back")
+const btnOrangeInGoal = document.getElementById("orange-in-goal")
+const btnOrangeLeftBack = document.getElementById("orange-left-back")
+const btnCenterHighSky = document.getElementById("center-high-sky")
+const btnCenterLowSky = document.getElementById("center-low-sky")
+const btnCenterCam = document.getElementById("center-cam")
 var restList = document.getElementById("rest-id").children
 var liMenberList = document.getElementById("member-list").children
 
@@ -51,6 +59,106 @@ var currentRestCnt = 0;
 var currentRestMembers = [];
 var restMemberQueue = [];
 var tglHelp = true;
+
+const SPECTATE_CAMERA_MODE = {
+    FLY_BALL: "SpectateSetCameraFlyBall",
+    FLY_NO_TARGET: "SpectateSetCameraFlyNoTarget",
+};
+
+const CAMERA_FOV = {
+    DEFAULT: "SpectateSetCameraFOV 60",
+    WIDE: "SpectateSetCameraFOV 100",
+};
+
+const cameraPlacePresets = {
+    blueInGoal: {
+        description: "ブルーゴール内",
+        pos: [10.584334, -5899.654785, 200.723129],
+        rot: [0.0, 0.0, 0.0],
+        fov: CAMERA_FOV.WIDE,
+        camera_mode: SPECTATE_CAMERA_MODE.FLY_BALL,
+    },
+    orangeInGoal: {
+        description: "オレンジゴール内",
+        pos: [16.639233, 5881.547852, 210.352936],
+        rot: [0.0, 0.0, 0.0],
+        fov: CAMERA_FOV.WIDE,
+        camera_mode: SPECTATE_CAMERA_MODE.FLY_BALL,
+    },
+    center: {
+        description: "真ん中",
+        pos: [-3593.823242, 6.488967, 403.777679],
+        rot: [0.0, 0.0, 0.0],
+        fov: CAMERA_FOV.DEFAULT,
+        camera_mode: SPECTATE_CAMERA_MODE.FLY_BALL,
+    },
+    blueLeftBack: {
+        description: "ブルー左後ろ",
+        pos: [3445.395508, -4409.955566, 253.91632],
+        rot: [0.0, 0.0, 0.0],
+        fov: CAMERA_FOV.DEFAULT,
+        camera_mode: SPECTATE_CAMERA_MODE.FLY_BALL,
+    },
+    orangeLeftBack: {
+        description: "オレンジ左後ろ",
+        pos: [-3167.162598, 4745.558006, 269.075203],
+        rot: [0.0, 0.0, 0.0],
+        fov: CAMERA_FOV.DEFAULT,
+        camera_mode: SPECTATE_CAMERA_MODE.FLY_BALL,
+    },
+    kickoffHighSky: {
+        description: "キックオフ上空",
+        pos: [-2822.076172, -1610.922119, 4676.012695],
+        rot: [-59.809569, 30.102538, 0.0],
+        fov: CAMERA_FOV.WIDE,
+        camera_mode: SPECTATE_CAMERA_MODE.FLY_NO_TARGET,
+    },
+    kickoffLowSky: {
+        description: "キックオフ低空",
+        pos: [-1480.37439, 1.962628, 44.586998],
+        rot: [0.0, 0.0, 0.0],
+        fov: CAMERA_FOV.DEFAULT,
+        camera_mode: SPECTATE_CAMERA_MODE.FLY_BALL,
+    },
+};
+
+const RCONPASS = "uMZgvhnHjTsw1WPH";
+// const RCON = new WebSocket("ws://localhost:9002");
+let RCON
+
+function ws_connect(){
+    RCON = new WebSocket("ws://localhost:9002");
+    RCON.onopen = function open() {
+        RCON.send(`rcon_password ${RCONPASS}`);
+        RCON.send("rcon_refresh_allowed");
+        RCON.send("replay_gui hud 0");
+    };
+
+    RCON.onerror = (err) => {
+        console.log(err);
+    };
+
+    RCON.onclose = (close) => {
+        ws_connect()
+    }
+}
+ws_connect()
+
+function setPosition(placeName) {
+    const targetPreset = cameraPlacePresets[placeName];
+    // カメラのモードをセットする
+    RCON.send(targetPreset.camera_mode);
+    //sleep
+    RCON.send('sleep 1')
+    // FOVをセットする
+    RCON.send(targetPreset.fov);
+    // カメラの位置をセットする
+    RCON.send(`SpectateSetCameraPosition ${targetPreset.pos.join(" ")}`);
+    if (targetPreset.camera_mode === SPECTATE_CAMERA_MODE.FLY_NO_TARGET) {
+        // カメラの角度をセットする
+        RCON.send(`SpectateSetCameraRotation ${targetPreset.rot.join(" ")}`);
+    }
+}
 
 //ipcでconfig.jsからデータ取得
 ipcRenderer.send('asynchronous-message', 'getData');
@@ -204,6 +312,36 @@ btnNext.onclick = function() {
     io.emit('refresh', info);
 }
 
+//スペクテーターカメラ
+//青ゴール内
+btnBlueInGoal.onclick = function() {
+    setPosition("blueInGoal")
+}
+//青左後ろ
+btnBlueLeftBack.onclick = function() {
+    setPosition("blueLeftBack")
+}
+//橙ゴール内
+btnOrangeInGoal.onclick = function() {
+    setPosition("orangeInGoal")
+}
+//橙左後ろ
+btnOrangeLeftBack.onclick = function() {
+    setPosition("orangeLeftBack")
+}
+//中央上空
+btnCenterHighSky.onclick = function() {
+    setPosition("kickoffHighSky")
+}
+//中央低空
+btnCenterLowSky.onclick = function() {
+    setPosition("kickoffLowSky")
+}
+//中央カメラ
+btnCenterCam.onclick = function() {
+    setPosition("center")
+}
+
 //v1.2.0 ツイートで募集ボタン
 //v1.2.1 ハッシュタグ追加
 btnShare.onclick = function() {
@@ -222,6 +360,10 @@ btnShare.onclick = function() {
 //URL押下処理
 serverUrl.onclick = function() {
     urlopen(this.innerText);
+}
+
+pluginUrl.onclick = function() {
+    urlopen("https://bakkesplugins.com/plugins/view/107")
 }
 
 //inputのEnter処理
@@ -342,15 +484,15 @@ function addMember(user){
     if (members.find(element => element == user) === undefined && members.length < maxMember && joinable){
         members.push(user);
         // console.log(members);
-        message = '@' + user + ' さんの参加を受け付けました！';
+        message = '@' + user + ' さんの参加を受け付けました。';
         info = {open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers}
         io.emit('add', user);
         setMemberList();
         connectLog.classList.remove("err");
         if(members.length < minMember){
-            message += 'あと' + (minMember - members.length) + '人集まればプラべ開始です！'
+            message += 'あと' + (minMember - members.length) + '人集まればプラべ開始です。'
         }else if (members.length >= minMember && members.length != maxMember){
-            message += 'あと' + (maxMember - members.length) + '人まで参加可能です！'
+            message += 'あと' + (maxMember - members.length) + '人まで参加可能です。'
         }
     } else if(joinable === false){
         connectLog.classList.add("err");
@@ -381,6 +523,9 @@ function removeMember(user){
 }
 function responseHelp(){
     if(joinable){
+        if (members.length === maxMember) {
+            return 'ただいま満席となっております。参加取消は「!leave」とチャットしてください。'
+        }
         return '参加は「!join」、参加取消は「!leave」とチャットしてください。'
     } else {
         return '現在プラべを開催していません。'
