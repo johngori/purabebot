@@ -145,6 +145,7 @@ function ws_connect(){
 ws_connect()
 
 function setPosition(placeName) {
+    RCON.send("Spectate_EnableRestoration 0")
     const targetPreset = cameraPlacePresets[placeName];
     // カメラのモードをセットする
     RCON.send(targetPreset.camera_mode);
