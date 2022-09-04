@@ -2,6 +2,8 @@ const btConnect = document.getElementById("btn-connect");
 const fmBotName = document.getElementById("bot-name");
 const fmMyChannel = document.getElementById("channel-name");
 const fmOAuth = document.getElementById("oauth-pass");
+const fmRconPass = document.getElementById("rcon-pass")
+const tglRcon = document.getElementById("tgl-rcon")
 const pGetToken = document.getElementById("get-token");
 const form = document.getElementById('connect-form');
 const textError = document.getElementById("text-error");
@@ -50,7 +52,7 @@ var password = '';
 var members = [];
 var open = false;
 var info = {open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers};
-var arrConfig = {'botname': '', 'mychannel': '', 'oauth': ''};
+var arrConfig = {'botname': '', 'mychannel': '', 'oauth': '', 'rconpass':''};
 var arrRoom = {'roomname': '', 'roompass': '', 'playercnt': '', 'restcnt': ''};
 const tmi = require('tmi.js');
 var client;
@@ -122,27 +124,29 @@ const cameraPlacePresets = {
     },
 };
 
-const RCONPASS = "uMZgvhnHjTsw1WPH";
+
 // const RCON = new WebSocket("ws://localhost:9002");
 let RCON
 
 function ws_connect(){
     RCON = new WebSocket("ws://localhost:9002");
     RCON.onopen = function open() {
-        RCON.send(`rcon_password ${RCONPASS}`);
+        RCON.send(`rcon_password ${arrConfig.rconpass}`);
         RCON.send("rcon_refresh_allowed");
         RCON.send("replay_gui hud 0");
+        connectLog.classList.remove("err");
+        connectLog.innerText = "RCONへ接続しました。"
     };
 
     RCON.onerror = (err) => {
-        console.log(err);
+        connectLog.classList.add("err");
+        connectLog.innerText = "RCONへ接続できません。"
     };
 
     RCON.onclose = (close) => {
         ws_connect()
     }
 }
-ws_connect()
 
 function setPosition(placeName) {
     RCON.send("Spectate_EnableRestoration 0")
@@ -161,7 +165,7 @@ function setPosition(placeName) {
     }
 }
 
-//ipcでconfig.jsからデータ取得
+//ipcでconfig.jsonからデータ取得
 ipcRenderer.send('asynchronous-message', 'getData');
 ipcRenderer.on('asynchronous-reply', (event, arg) => {
     if(arg['botname'] !== undefined){
@@ -172,6 +176,17 @@ ipcRenderer.on('asynchronous-reply', (event, arg) => {
     }
     if(arg['oauth'] !== undefined){
         fmOAuth.value = arg['oauth'];
+    }
+    if(arg['rcon'] !== undefined) {
+        tglRcon.checked = arg['rcon']
+        if(arg['rcon']) {
+            fmRconPass.disabled = false
+        } else {
+            fmRconPass.disabled = true
+        }
+    }
+    if(arg['rconpass'] !== undefined){
+        fmRconPass.value = arg['rconpass']
     }
 })
 
@@ -208,12 +223,15 @@ btConnect.onclick = function() {
     fmBotName.setAttribute("disabled", true);
     fmMyChannel.setAttribute("disabled", true);
     fmOAuth.setAttribute("disabled", true);
+    fmRconPass.setAttribute("disabled", true);
     //ipcでindex.jsにデータ送信
     let botChannel = fmBotName.value.toLowerCase();
     channelName = fmMyChannel.value.toLowerCase();
     let authpass = fmOAuth.value;
-    arrConfig = {'botname': botChannel, 'mychannel': channelName, 'oauth': authpass}
-    connectTwitch(botChannel, channelName, authpass);
+    let rconpass = fmRconPass.value;
+    let rconChk = tglRcon.checked;
+    arrConfig = {'botname': botChannel, 'mychannel': channelName, 'oauth': authpass, 'rcon': rconChk,'rconpass': rconpass}
+    connectTwitch(botChannel, channelName, authpass, rconChk);
 };
 
 //部屋立て、部屋削除
@@ -287,6 +305,14 @@ btnClose.onclick = function() {
         this.innerText = "受付終了";
     }
     this.disabled = false;
+}
+
+function rconCheck(checked) {
+    if(checked) {
+        fmRconPass.disabled = false
+    } else {
+        fmRconPass.disabled = true
+    }
 }
 
 //v1.2.1 ヘルプのチャットを自動投稿するかのチェックの確認
@@ -383,7 +409,7 @@ btnAddMember.onclick = function() {
 
 
 // v1.3.1 モデレータ権限でも全ての制御を可能に変更
-function connectTwitch(botUserName, channelName, botOAuth){
+function connectTwitch(botUserName, channelName, botOAuth, isConnectRcon){
 
     client = new tmi.Client({
         options: { debug: true, messagesLogLevel: "info" },
@@ -426,6 +452,16 @@ function connectTwitch(botUserName, channelName, botOAuth){
             connectContents.classList.add("on");
             setServer();
             ipcRenderer.send('sendData', arrConfig);
+            if(isConnectRcon) {
+                btnBlueInGoal.disabled = false
+                btnBlueLeftBack.disabled = false
+                btnOrangeInGoal.disabled = false
+                btnOrangeLeftBack.disabled = false
+                btnCenterHighSky.disabled = false
+                btnCenterLowSky.disabled = false
+                btnCenterCam.disabled = false
+                ws_connect();
+            }
         }
     });
     client.on('message', (channel, tags, message, self) => {

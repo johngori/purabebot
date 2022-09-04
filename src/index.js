@@ -8,9 +8,11 @@ const mychannel = store.get("mychannel");
 const oauth = store.get("oauth");
 const roomname = store.get("roomname");
 const roompass = store.get("roompass");
+const rcon = store.get("rcon")
+const rconpass = store.get("rconpass")
 const playercnt = store.get("playercnt");
 const restcnt = store.get("restcnt");
-var arrConfig = { botname, mychannel, oauth}
+var arrConfig = { botname, mychannel, oauth, rcon, rconpass}
 var arrRoom = {roomname, roompass, playercnt, restcnt};
 
 ipcMain.on('asynchronous-message', (event, arg) => {  // channel名は「asynchronous-message」
@@ -22,6 +24,8 @@ ipcMain.on('sendData', (event, arg) => {  // channel名は「asynchronous-messag
   store.set("botname", arg['botname']);
   store.set("mychannel", arg['mychannel']);
   store.set("oauth", arg['oauth']);
+  store.set("rcon", arg['rcon']);
+  store.set("rconpass", arg['rconpass']);
 })
 
 ipcMain.on('asynchronous-message2', (event, arg) => {  // channel名は「asynchronous-message」

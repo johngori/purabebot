@@ -11,9 +11,18 @@ label {
   width: 98%;
 }
 
+#tgl-rcon {
+  width: 20px;
+}
+
 .auth-url {
   text-align: right;
   font-size: 12px;
+}
+
+.checkbox-container {
+  font-size: 12px;
+  align-items: baseline;
 }
 
 .auth-url p { 
