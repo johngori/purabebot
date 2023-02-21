@@ -468,8 +468,12 @@ function connectTwitch(botUserName, channelName, botOAuth, isConnectRcon){
         switch(msg){
             case '!j':
             case '!join':
-                client.say(channel, addMember(tags.username));
-                checkStart();
+                if (members.length === minMember - 1) {
+                    client.say(channel, addMember(tags.username));
+                    checkStart();
+                } else {
+                    client.say(channel, addMember(tags.username));
+                }
                 break;
             case '!l':
             case '!leave':
@@ -495,6 +499,7 @@ function connectTwitch(botUserName, channelName, botOAuth, isConnectRcon){
                 break;
             case '!qk':
                 if(tags.username === channelName || tags.mod){
+                    if (members.length <= minMember) return;
                     if(!isQkCoolTime) {
                         isQkCoolTime = true;
                         nextRestMember();
@@ -508,8 +513,12 @@ function connectTwitch(botUserName, channelName, botOAuth, isConnectRcon){
         }
         if(tags.username === channelName || tags.mod){
             if(!msg.indexOf('!add ')){
-                client.say(channel, addMember(message.split(' ')[1]));
-                checkStart();
+                if (members.length === minMember - 1) {
+                    client.say(channel, addMember(message.split(' ')[1]));
+                    checkStart();
+                } else {
+                    client.say(channel, addMember(message.split(' ')[1]));
+                }
             }
             if(!msg.indexOf('!remove ')){
                 client.say(channel, removeMember(message.split(' ')[1]));
@@ -682,7 +691,7 @@ function setPassword(pa){
     return message;
 }
 
-//var1.6.0 休憩を次に回す処理
+//var1.5.0 休憩を次に回す処理
 function nextRestMember() {
     setCurrentRestMemberCnt();
     restMemberList.innerText = ""
@@ -746,11 +755,11 @@ function fncAddMember(){
     text = addMember(addUserName);
     if(text.indexOf('参加を受け付けました') != -1){
         client.say(channelName, text);
+        checkStart();
     } else {
         connectLog.innerText = text;
     }
     fmAddMember.value = "";
-    checkStart();
 }
 function setCurrentRestMemberCnt(){
     currentRestCnt = info["members"].length - parseInt(info["minMember"]);
