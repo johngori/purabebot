@@ -248,13 +248,6 @@ btnRoom.onclick = function() {
 
     if(info["open"]){
         connectLog.innerText = initData();
-        connectLog.classList.remove("err");
-        this.disabled = false;
-        this.innerText = "部屋立て"
-        btnRefresh.disabled = true;
-        btnClose.disabled = true;
-        btnShare.disabled = true;
-        btnClose.innerText ="受付終了";
     } else {
         msg = roomCheck();
         if(msg == "") {
@@ -647,6 +640,13 @@ function initData(){
     info = {open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers}
     io.emit('refresh', info);
     setMemberList();
+    connectLog.classList.remove("err");
+    btnRoom.disabled = false;
+    btnRoom.innerText = "部屋立て"
+    btnRefresh.disabled = true;
+    btnClose.disabled = true;
+    btnShare.disabled = true;
+    btnClose.innerText ="受付終了";
     return 'プラべの受付データを初期化しました。'
 }
 function displayRoom(){
