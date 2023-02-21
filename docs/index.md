@@ -5,8 +5,8 @@
 
 ### ダウンロード
 
-[こちら](https://github.com/johngori/purabebot/releases)から最新版の「purabebot Setup <VERSION>.exe」をダウンロードして解凍してください。
-  ※<VERSION>には最新バージョンの名称が記載してあります。
+[こちら](https://github.com/johngori/purabebot/releases)から最新版の「purabebot Setup (VERSION).exe」をダウンロードして解凍してください。
+  ※(VERSION)には最新バージョンの名称が記載してあります。
 
 操作方法は[こちら](https://johngori.github.io/purabebot/manual)をご確認ください。
 
