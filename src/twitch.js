@@ -61,7 +61,10 @@ var currentRestCnt = 0;
 var currentRestMembers = [];
 var restMemberQueue = [];
 var tglHelp = true;
+var isQkCoolTime = false;
 
+
+//RCON関連=====================================
 const SPECTATE_CAMERA_MODE = {
     FLY_BALL: "SpectateSetCameraFlyBall",
     FLY_NO_TARGET: "SpectateSetCameraFlyNoTarget",
@@ -164,6 +167,8 @@ function setPosition(placeName) {
         RCON.send(`SpectateSetCameraRotation ${targetPreset.rot.join(" ")}`);
     }
 }
+//=====================================RCON関連
+
 
 //ipcでconfig.jsonからデータ取得
 ipcRenderer.send('asynchronous-message', 'getData');
@@ -329,14 +334,7 @@ btnReset.onclick = function() {
 
 //次へボタン処理
 btnNext.onclick = function() {
-    setCurrentRestMemberCnt();
-    restMemberList.innerText = ""
-    currentRestMembers.length = 0
-    for(var i=0; i<currentRestCnt; i++) {
-        addRest();
-    }
-    info = {open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers};
-    io.emit('refresh', info);
+    nextRestMember();
 }
 
 //スペクテーターカメラ
@@ -493,6 +491,18 @@ function connectTwitch(botUserName, channelName, botOAuth, isConnectRcon){
             case '!clear':
                 if(tags.username === channelName || tags.mod){
                     client.say(channel, initData());
+                }
+                break;
+            case '!qk':
+                if(tags.username === channelName || tags.mod){
+                    if(!isQkCoolTime) {
+                        isQkCoolTime = true;
+                        nextRestMember();
+                        client.say(channel, `${tags.username} さんが休憩を回しました。`)
+                        setTimeout(()=>{
+                            isQkCoolTime = false;
+                        }, 10000)
+                    }
                 }
                 break;
         }
@@ -670,6 +680,18 @@ function setPassword(pa){
         io.emit('refresh', info);
     }
     return message;
+}
+
+//var1.6.0 休憩を次に回す処理
+function nextRestMember() {
+    setCurrentRestMemberCnt();
+    restMemberList.innerText = ""
+    currentRestMembers.length = 0
+    for(var i=0; i<currentRestCnt; i++) {
+        addRest();
+    }
+    info = {open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers};
+    io.emit('refresh', info);
 }
 //ブラウザでURLを開く
 function urlopen(url){
