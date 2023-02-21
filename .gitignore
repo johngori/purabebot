@@ -169,8 +169,4 @@ dist/win-unpacked/swiftshader/libEGL.dll
 dist/win-unpacked/swiftshader/libGLESv2.dll
 パッケージ化.txt
 scripts/build.js
-dist/purabebot Setup 1.2.0.exe
-dist/purabebot Setup 1.2.0.exe.blockmap
-version/purabebot Setup 1.2.0.exe
-dist/purabebot Setup 1.2.1.exe
-dist/purabebot Setup 1.2.1.exe.blockmap
+dist/
