@@ -71,18 +71,20 @@ OBSのソースの追加を実施してください。
 
 <table>
   <tr>
-    <td>使用する配信チャンネル名</td>
-    <td>ご自身の配信チャンネル名（URLのID部分）</td>
+    <td>使用する配信チャンネル名（英数小文字のみ）</td>
+    <td>配信で使用するチャンネル名。「 https://www.twitch.tv/johngori 」であれば「johngori」</td>
   </tr>
   <tr>
-    <td>自分のチャンネル名 or 作成したボットのチャンネル名</td>
-    <td>botをお持ちの方はbotのアカウント名</td>
+    <td>自分のチャンネル名 or 作成したボットのチャンネル名（トークンを取得したアカウントID）</td>
+    <td>botをお持ちの方はbotのチャンネル名（使用する配信チャンネル名でも可）</td>
   </tr>
   <tr>
     <td>Twitch Chat OAuth Password</td>
     <td>ボット or 自身のチャンネルのトークン</td>
   </tr>
 </table>
+
+スペクテーターカメラ設定につきましては[こちら](https://note.com/johngori/n/ne7dcd4773534)をご確認ください。
 
 入力が完了しましたら「**接続**」ボタンをクリックしてください。  
 ![接続](assets/images/接続.png)
