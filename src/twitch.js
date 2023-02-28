@@ -482,11 +482,13 @@ function connectTwitch(botUserName, channelName, botOAuth, isConnectRcon){
             case '!close':
                 if(tags.username === channelName || tags.mod){
                     client.say(channel, closeMatch());
-                    if(info["joinable"]) {
-                        btnClose.innerText ="受付再開";
-                    } else {
-                        btnClose.innerText ="受付終了";
-                    }
+                    btnClose.innerText ="受付再開";
+                }
+                break;
+            case '!restart':
+                if(tags.username === channelName || tags.mod){
+                    client.say(channel, restartMatch());
+                    btnClose.innerText ="受付終了";
                 }
                 break;
             case '!clear':
