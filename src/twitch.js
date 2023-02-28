@@ -297,7 +297,6 @@ btnClose.onclick = function() {
     if(info["joinable"]) {
         client.say(channelName, closeMatch());
         this.innerText ="受付再開";
-        
     } else {
         client.say(channelName, restartMatch());
         this.innerText = "受付終了";
@@ -483,6 +482,11 @@ function connectTwitch(botUserName, channelName, botOAuth, isConnectRcon){
             case '!close':
                 if(tags.username === channelName || tags.mod){
                     client.say(channel, closeMatch());
+                    if(info["joinable"]) {
+                        btnClose.innerText ="受付再開";
+                    } else {
+                        btnClose.innerText ="受付終了";
+                    }
                 }
                 break;
             case '!clear':
