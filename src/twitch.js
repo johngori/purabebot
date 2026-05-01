@@ -21,14 +21,13 @@ const fmAddMember = document.getElementById("fm-add-member");
 const btnAddMember = document.getElementById("btn-add");
 const btnNext = document.getElementById("btn-next");
 const btnReset = document.getElementById("btn-init");
-const restMemberList = document.getElementById("rest-id")
-var restList = document.getElementById("rest-id").children
-var liMenberList = document.getElementById("member-list").children
+const restMemberList = document.getElementById("rest-id");
+var restList = document.getElementById("rest-id").children;
+var liMenberList = document.getElementById("member-list").children;
 
-const { ipcRenderer, remote } = require('electron');
+const { ipcRenderer } = require('electron');
 const { shell } = require('electron');
 const express = require('express');
-const { stringify } = require('querystring');
 const app = express();
 const server = require('http').createServer(app);
 const cron = require('node-cron');
@@ -94,14 +93,30 @@ var minMember;
 var maxMember;
 var joinable = false;
 var roomName = '';
+var channelName = '';
+var password = '';
+var members = [];
+var open = false;
+var currentRestCnt = 0;
+var currentRestMembers = [];
+var restMemberQueue = [];
+var tglHelp = true;
+var isQkCoolTime = false;
+var arrConfig = { 'username': '', 'token': '' };
+var arrRoom = { 'roomname': '', 'roompass': '', 'playercnt': '', 'restcnt': '' };
+const tmi = require('tmi.js');
+var client;
+var info;
+
+function updateInfo() {
+    info = { open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers };
+    return info;
+}
+updateInfo();
 
 logHeader.onclick = function () {
     logPanel.classList.toggle('hidden');
-    if (logPanel.classList.contains('hidden')) {
-        btnToggleLog.innerText = '▲ 表示';
-    } else {
-        btnToggleLog.innerText = '▼ 隠す';
-    }
+    btnToggleLog.innerText = logPanel.classList.contains('hidden') ? '▲ 表示' : '▼ 隠す';
 };
 
 function addLog(message) {
@@ -133,35 +148,19 @@ function addLog(message) {
     connectLog.scrollTop = connectLog.scrollHeight;
 }
 
-var channelName = "";
-var password = '';
-var members = [];
-var open = false;
-var info = { open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers };
-var arrConfig = { 'username': '', 'token': '' };
-var arrRoom = { 'roomname': '', 'roompass': '', 'playercnt': '', 'restcnt': '' };
-const tmi = require('tmi.js');
-var client;
-var currentRestCnt = 0;
-var currentRestMembers = [];
-var restMemberQueue = [];
-var tglHelp = true;
-var isQkCoolTime = false;
-
-//ipcでconfig.jsonからデータ取得
 ipcRenderer.send('asynchronous-message', 'getData');
 ipcRenderer.on('asynchronous-reply', (event, arg) => {
     if (arg['username'] && arg['token']) {
         arrConfig.username = arg['username'];
         arrConfig.token = arg['token'];
-
         btnLoginTwitch.disabled = true;
         addLog("保存された情報で自動接続しています...");
         connectTwitch(arrConfig.username, arrConfig.username, `oauth:${arrConfig.token}`);
     } else {
+        splashScreen.style.display = "none";
         form.style.display = "block";
     }
-})
+});
 
 ipcRenderer.send('asynchronous-message2', 'getRoomInfo');
 ipcRenderer.on('asynchronous-reply2', (event, arg) => {
@@ -171,17 +170,9 @@ ipcRenderer.on('asynchronous-reply2', (event, arg) => {
     if (arg['roompass'] !== undefined) {
         fmPass.value = arg['roompass'];
     }
-    if (Number.isInteger(parseInt(arg['playercnt']))) {
-        cntPlayer.value = parseInt(arg['playercnt']);
-    } else {
-        cntPlayer.value = 6;
-    }
-    if (Number.isInteger(parseInt(arg['restcnt']))) {
-        cntRest.value = parseInt(arg['restcnt']);
-    } else {
-        cntRest.value = 3;
-    }
-})
+    cntPlayer.value = Number.isInteger(parseInt(arg['playercnt'])) ? parseInt(arg['playercnt']) : 6;
+    cntRest.value = Number.isInteger(parseInt(arg['restcnt'])) ? parseInt(arg['restcnt']) : 3;
+});
 
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
@@ -197,6 +188,13 @@ ipcRenderer.on('sign-out', () => {
     members = [];
     open = false;
     joinable = false;
+    password = '';
+    roomName = '';
+    restMemberQueue = [];
+    currentRestCnt = 0;
+    currentRestMembers = [];
+    isQkCoolTime = false;
+    io.emit('refresh', updateInfo());
     connectContents.classList.remove("on");
     form.style.display = "block";
     form.style.height = "";
@@ -205,6 +203,7 @@ ipcRenderer.on('sign-out', () => {
     btnRoom.innerText = "部屋立て";
     btnRefresh.disabled = true;
     btnClose.disabled = true;
+    btnClose.innerText = "受付終了";
     btnShare.disabled = true;
     memberList.innerHTML = '';
     restMemberList.innerHTML = '';
@@ -214,14 +213,12 @@ ipcRenderer.on('sign-out', () => {
 btnLoginTwitch.onclick = function () {
     this.disabled = true;
     addLog("ブラウザでTwitch認証を行ってください...");
-
     const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=http://localhost:3000/auth&response_type=token&scope=chat:read+chat:edit`;
     shell.openExternal(authUrl);
 };
 
 function handleLoginSuccess(accessToken) {
     addLog("ユーザー情報を取得しています...");
-    // Get User info from Twitch API
     fetch('https://api.twitch.tv/helix/users', {
         headers: {
             'Authorization': 'Bearer ' + accessToken,
@@ -245,11 +242,8 @@ function handleLoginSuccess(accessToken) {
         });
 }
 
-//部屋立て、部屋削除
-//v1.1.0 部屋立て時、初期から自分を参加させるように変更
 btnRoom.onclick = function () {
     var msg = "";
-
     this.disabled = true;
 
     if (info["open"]) {
@@ -263,7 +257,7 @@ btnRoom.onclick = function () {
             addMember(channelName);
             addLog("受付を開始しました！");
             this.disabled = false;
-            this.innerText = "部屋削除"
+            this.innerText = "部屋削除";
             btnRefresh.disabled = false;
             btnClose.disabled = false;
             btnShare.disabled = false;
@@ -273,28 +267,25 @@ btnRoom.onclick = function () {
             addLog(msg);
         }
     }
-}
+};
 
-//更新ボタン処理
 btnRefresh.onclick = function () {
     this.disabled = true;
-    msg = roomCheck();
+    var msg = roomCheck();
     if (msg == "") {
         roomName = fmRoom.value;
         password = fmPass.value;
         minMember = parseInt(cntPlayer.value);
         maxMember = minMember + parseInt(cntRest.value);
-        info = { open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers };
-        io.emit('refresh', info);
+        io.emit('refresh', updateInfo());
         addLog("更新しました。");
         this.disabled = false;
     } else {
         addLog(msg);
         this.disabled = false;
     }
-}
+};
 
-//受付終了、受付再開
 btnClose.onclick = function () {
     this.disabled = true;
     if (info["joinable"]) {
@@ -305,61 +296,49 @@ btnClose.onclick = function () {
         this.innerText = "受付終了";
     }
     this.disabled = false;
-}
+};
 
-//v1.2.1 ヘルプのチャットを自動投稿するかのチェックの確認
 function helpChange(checked) {
     tglHelp = checked;
 }
 
-//リセットボタン処理
 btnReset.onclick = function () {
     initRestMember();
-    info = { open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers };
-    io.emit('refresh', info);
-}
+    io.emit('refresh', updateInfo());
+};
 
-//次へボタン処理
 btnNext.onclick = function () {
     nextRestMember();
-}
+};
 
-//v1.2.0 ツイートで募集ボタン
-//v1.2.1 ハッシュタグ追加
 btnShare.onclick = function () {
-    var tweetText = 'ただいまプラべ募集中！'
+    var tweetText = 'ただいまプラべ募集中！';
     if (info.members.length == info.maxMember) {
-        tweetText = 'ただいまプラべ満席です…%0A空き次第のご案内となります。'
+        tweetText = 'ただいまプラべ満席です…%0A空き次第のご案内となります。';
     } else if (info.members.length < info.minMember) {
-        tweetText += '@ ' + (info.minMember - info.members.length) + '～' + (info.maxMember - info.members.length)
+        tweetText += '@ ' + (info.minMember - info.members.length) + '～' + (info.maxMember - info.members.length);
     } else {
-        tweetText += '休憩枠 @ ' + (info.maxMember - info.members.length)
+        tweetText += '休憩枠 @ ' + (info.maxMember - info.members.length);
     }
-    var url = '%0A%0Ahttps://www.twitch.tv/' + channelName
-    shell.openExternal('https://twitter.com/intent/tweet?text=' + tweetText + url + '&hashtags=ぷらべぼっと')
-}
+    var url = '%0A%0Ahttps://www.twitch.tv/' + channelName;
+    shell.openExternal('https://twitter.com/intent/tweet?text=' + tweetText + url + '&hashtags=ぷらべぼっと');
+};
 
-//URL押下処理
 serverUrl.onclick = function () {
-    urlopen(this.innerText);
-}
+    shell.openExternal(this.innerText);
+};
 
-//inputのEnter処理
 fmAddMember.onkeypress = (e) => {
     const key = e.keyCode || e.charCode || 0;
-    // 13はEnterキーのキーコード
     if (key == 13) {
         fncAddMember();
     }
-}
+};
 
-//追加ボタン処理
 btnAddMember.onclick = function () {
     fncAddMember();
-}
+};
 
-
-// v1.3.1 モデレータ権限でも全ての制御を可能に変更
 function connectTwitch(botUserName, connectChannel, botOAuth) {
     channelName = connectChannel;
 
@@ -376,7 +355,6 @@ function connectTwitch(botUserName, connectChannel, botOAuth) {
         channels: [channelName]
     });
     client.connect().catch(function (err) {
-        //エラー時処理
         splashScreen.style.display = "none";
         form.style.display = "block";
         console.error(err);
@@ -450,10 +428,10 @@ function connectTwitch(botUserName, connectChannel, botOAuth) {
                     if (!isQkCoolTime) {
                         isQkCoolTime = true;
                         nextRestMember();
-                        client.say(channel, `${tags.username} さんが休憩を回しました。`)
+                        client.say(channel, `${tags.username} さんが休憩を回しました。`);
                         setTimeout(() => {
                             isQkCoolTime = false;
-                        }, 10000)
+                        }, 10000);
                     }
                 }
                 break;
@@ -482,20 +460,20 @@ function connectTwitch(botUserName, connectChannel, botOAuth) {
         }
     });
 }
+
 function addMember(user) {
     var message = '';
     if (members.find(element => element == user) === undefined && members.length < maxMember && joinable) {
         members.push(user);
-        // console.log(members);
         message = '@' + user + ' さんの参加を受け付けました。';
-        info = { open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers }
+        updateInfo();
         io.emit('add', user);
         setMemberList();
         connectLog.classList.remove("err");
         if (members.length < minMember) {
-            message += 'あと' + (minMember - members.length) + '人集まればプラべ開始です。'
+            message += 'あと' + (minMember - members.length) + '人集まればプラべ開始です。';
         } else if (members.length >= minMember && members.length != maxMember) {
-            message += 'あと' + (maxMember - members.length) + '人まで参加可能です。'
+            message += 'あと' + (maxMember - members.length) + '人まで参加可能です。';
         }
     } else if (joinable === false) {
         connectLog.classList.add("err");
@@ -507,9 +485,9 @@ function addMember(user) {
         connectLog.classList.add("err");
         message = 'ただいま満席となっております。しばらくお待ちください。';
     }
-
     return message;
 }
+
 function removeMember(user) {
     var message = '';
     if (members.find(element => element == user) !== undefined) {
@@ -517,23 +495,24 @@ function removeMember(user) {
         message = '@' + user + ' さんの参加を取り消しました。';
         setMemberList();
         removeUserRestQueue(user);
-        info = { open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers }
-        io.emit('refresh', info);
+        io.emit('refresh', updateInfo());
     } else {
         message = '@' + user + ' さんはまだ参加していません。';
     }
     return message;
 }
+
 function responseHelp() {
     if (joinable) {
         if (members.length === maxMember) {
-            return 'ただいま満席となっております。参加取消は「!leave」とチャットしてください。'
+            return 'ただいま満席となっております。参加取消は「!leave」とチャットしてください。';
         }
-        return '参加は「!join」、参加取消は「!leave」とチャットしてください。'
+        return '参加は「!join」、参加取消は「!leave」とチャットしてください。';
     } else {
-        return '現在プラべを開催していません。'
+        return '現在プラべを開催していません。';
     }
 }
+
 function openMatch(rn, pa, min, rest) {
     var message = '';
     if (rn === undefined) return '部屋名を入力してください。';
@@ -554,13 +533,13 @@ function openMatch(rn, pa, min, rest) {
             message = 'プラべの受付を開始します！　部屋名：' + roomName + '、パス：' + password + '　参加される方は「!join」、参加をキャンセルされる方は「!leave」と入力ください。';
         }
         setMemberList();
-        info = { open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers };
-        io.emit('refresh', info);
+        io.emit('refresh', updateInfo());
         arrRoom = { 'roomname': roomName, 'roompass': password, 'playercnt': minMember, 'restcnt': parseInt(rest) };
         ipcRenderer.send('sendRoomInfo', arrRoom);
     }
     return message;
 }
+
 function closeMatch() {
     var message = '';
     if (!joinable) {
@@ -568,11 +547,11 @@ function closeMatch() {
     } else {
         joinable = false;
         message = 'プラべの受付を終了します。ご参加ありがとうございました。';
-        info = { open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers }
-        io.emit('refresh', info);
+        io.emit('refresh', updateInfo());
     }
     return message;
 }
+
 function restartMatch() {
     var message = '';
     if (joinable) {
@@ -580,42 +559,43 @@ function restartMatch() {
     } else {
         joinable = true;
         message = 'プラべの受付を再開します！部屋名：' + roomName + '、パス：' + password + '　参加される方は「!join」、参加をキャンセルされる方は「!leave」と入力ください。';
-        info = { open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers }
-        io.emit('refresh', info);
+        io.emit('refresh', updateInfo());
     }
     return message;
 }
+
 function initData() {
     open = false;
     joinable = false;
     roomName = '';
     password = '';
     members.length = 0;
-    info = { open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers }
-    io.emit('refresh', info);
+    io.emit('refresh', updateInfo());
     setMemberList();
     connectLog.classList.remove("err");
     btnRoom.disabled = false;
-    btnRoom.innerText = "部屋立て"
+    btnRoom.innerText = "部屋立て";
     btnRefresh.disabled = true;
     btnClose.disabled = true;
     btnShare.disabled = true;
     btnClose.innerText = "受付終了";
-    return 'プラべの受付データを初期化しました。'
+    return 'プラべの受付データを初期化しました。';
 }
+
 function displayRoom() {
     var message = '';
     if (!open) {
         message = '受付を開始していません。';
     } else {
         if (info.password == '') {
-            message = '部屋名「' + info.roomName + '」、パスワードはありません。'
+            message = '部屋名「' + info.roomName + '」、パスワードはありません。';
         } else {
-            message = '部屋名「' + info.roomName + '」、パスワード「' + info.password + '」'
+            message = '部屋名「' + info.roomName + '」、パスワード「' + info.password + '」';
         }
     }
     return message;
 }
+
 function setRoomName(rn) {
     var message = '';
     if (!open) {
@@ -623,47 +603,34 @@ function setRoomName(rn) {
     } else {
         roomName = rn;
         message = '部屋名を「' + roomName + '」に変更しました。';
-        info = { open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers }
-        io.emit('refresh', info);
+        io.emit('refresh', updateInfo());
     }
     return message;
 }
+
 function setPassword(pa) {
     var message = '';
     if (!open) {
         message = '受付を開始していません。';
     } else {
-        if (pa === undefined) {
-            password = 'なし';
-        } else {
-            password = pa;
-        }
-        message = 'パスワードを「' + roomName + '」に変更しました。';
-        info = { open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers }
-        io.emit('refresh', info);
+        password = pa === undefined ? 'なし' : pa;
+        message = 'パスワードを「' + password + '」に変更しました。';
+        io.emit('refresh', updateInfo());
     }
     return message;
 }
 
-//var1.5.0 休憩を次に回す処理
 function nextRestMember() {
     setCurrentRestMemberCnt();
-    restMemberList.innerText = ""
-    currentRestMembers.length = 0
+    restMemberList.innerText = "";
+    currentRestMembers.length = 0;
     for (var i = 0; i < currentRestCnt; i++) {
         addRest();
     }
-    info = { open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers };
-    io.emit('refresh', info);
+    io.emit('refresh', updateInfo());
 }
-//ブラウザでURLを開く
-function urlopen(url) {
-    const { shell } = require('electron');
-    shell.openExternal(url);
-}
-//部屋立て前にチェック
+
 function roomCheck() {
-    //部屋名なしはNG
     if (fmRoom.value == "") {
         return "部屋名を入力してください。";
     }
@@ -678,35 +645,29 @@ function roomCheck() {
     }
     return "";
 }
-//memberリスト作成
+
 function setMemberList() {
     memberList.innerHTML = "";
-    members.forEach((elem, index) => {
+    members.forEach((elem) => {
         var li = document.createElement('li');
-        var text = document.createTextNode(elem);
-        li.appendChild(text);
+        li.appendChild(document.createTextNode(elem));
         memberList.appendChild(li);
     });
-    //メンバー削除処理
     for (var i = 0; i < liMenberList.length; i++) {
         liMenberList[i].addEventListener('click', function () {
             client.say(channelName, removeMember(this.innerText));
         });
-    };
+    }
 }
-//コンソールでメンバー追加処理
-//v1.0.1 チャットで参加通知を表示
-//v1.2.1 trimを追加→手入力時に削除されないバグを解消
+
 function fncAddMember() {
-    var text = "";
-    var addUserName = fmAddMember.value
-    addUserName = addUserName.trim()
+    var addUserName = fmAddMember.value.trim();
     if (addUserName == "") {
         connectLog.classList.add("err");
-        connectLog.innerText = "追加する方の名前を入力してください。"
+        connectLog.innerText = "追加する方の名前を入力してください。";
         return false;
     }
-    text = addMember(addUserName);
+    var text = addMember(addUserName);
     if (text.indexOf('参加を受け付けました') != -1) {
         client.say(channelName, text);
         checkStart();
@@ -715,75 +676,68 @@ function fncAddMember() {
     }
     fmAddMember.value = "";
 }
+
 function setCurrentRestMemberCnt() {
     currentRestCnt = info["members"].length - parseInt(info["minMember"]);
     if (currentRestCnt < 0 || !Number.isInteger(currentRestCnt)) { currentRestCnt = 0; }
 }
+
 function initRestMember() {
     restMemberQueue.length = 0;
     currentRestMembers.length = 0;
     currentRestCnt = 0;
-    restMemberList.innerText = ""
-
+    restMemberList.innerText = "";
     setCurrentRestMemberCnt();
     if (currentRestCnt > 0) {
         for (var i = 0; i < currentRestCnt; i++) {
             addRest();
-        };
-    } else {
-        currentRestCnt = 0;
+        }
     }
 }
+
 function addRest() {
     if (restMemberQueue.length == 0) { restMemberQueue = info["members"].slice(); }
     var restUser = restMemberQueue.shift();
     var li = document.createElement('li');
-    var text = document.createTextNode(restUser);
-    li.appendChild(text);
+    li.appendChild(document.createTextNode(restUser));
     currentRestMembers.push(restUser);
     restMemberList.appendChild(li);
     restList[restList.length - 1].addEventListener('click', function () {
         removeRestMember(this.innerText);
         this.remove();
         addRest();
-        info = { open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers };
-        io.emit('refresh', info);
+        io.emit('refresh', updateInfo());
     });
 }
+
 function removeUserRestQueue(user) {
     restMemberQueue.forEach((restUser, index) => {
         if (restUser == user) {
             restMemberQueue.splice(index, 1);
             return false;
         }
-    })
+    });
 }
+
 function removeRestMember(user) {
     currentRestMembers.forEach((restUser, index) => {
         if (restUser == user) {
             currentRestMembers.splice(index, 1);
             return false;
         }
-    })
+    });
 }
-//v1.0.1 プラベ開始可能になった時にメンバーに通知
-function checkStart() {
-    var text = ""
-    if (members.length == minMember) {
-        members.forEach((member, index) => {
-            text += "@" + member + " "
-        });
-        text += "お待たせしました。プラべが開催できますのでご準備お願いします！"
-    }
-    client.say(channelName, text);
-}
-//front
 
-//v1.2.0 10分毎にHELP実行
-//v1.2.1 15分毎に変更
-//v1.2.1 helpのトグルボタン対応
+function checkStart() {
+    if (members.length == minMember) {
+        var text = members.map(m => "@" + m).join(" ");
+        text += " お待たせしました。プラべが開催できますのでご準備お願いします！";
+        client.say(channelName, text);
+    }
+}
+
 cron.schedule('*/15 * * * *', () => {
     if (tglHelp && info.joinable && client) {
         client.say(channelName, responseHelp());
     }
-})
+});

@@ -10,8 +10,8 @@ const playercnt = store.get("playercnt");
 const restcnt = store.get("restcnt");
 var arrConfig = { username, token };
 var arrRoom = { roomname, roompass, playercnt, restcnt };
-var mainWindow = null;
-var signOutItem = null;
+let mainWindow = null;
+let signOutItem = null;
 
 ipcMain.on("asynchronous-message", (event, arg) => {
   event.reply("asynchronous-reply", arrConfig);
@@ -48,9 +48,9 @@ const createWindow = () => {
     width: 750,
     minWidth: 750,
     maxWidth: 750,
-    height: 700,
-    minHeight: 700,
-    maxHeight: 700,
+    height: 720,
+    minHeight: 720,
+    maxHeight: 720,
     icon: __dirname + "/icon.ico",
     webPreferences: {
       nodeIntegration: true,
