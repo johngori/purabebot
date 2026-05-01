@@ -25,6 +25,8 @@ module.exports = {
     'menu.signOut': 'サインアウト',
     'menu.quit': '終了',
     'menu.language': '言語',
+    'menu.settings': '設定',
+    'menu.portSettings': 'ポート設定',
     // System log
     'log.title': 'システムログ',
     'log.show': '▲ 表示',
@@ -84,6 +86,8 @@ module.exports = {
       if (count < min) return base + `@ ${min - count}～${max - count}`;
       return base + `休憩枠 @ ${max - count}`;
     },
+    'btn.save': '保存',
+    'msg.portSaved': '保存しました。再起動後に反映されます。',
   },
 
   en: {
@@ -110,6 +114,8 @@ module.exports = {
     'menu.signOut': 'Sign Out',
     'menu.quit': 'Quit',
     'menu.language': 'Language',
+    'menu.settings': 'Settings',
+    'menu.portSettings': 'Port Settings',
     // System log
     'log.title': 'System Log',
     'log.show': '▲ Show',
@@ -169,5 +175,7 @@ module.exports = {
       if (count < min) return base + ` @ ${min - count}~${max - count}`;
       return base + ` Rest slots @ ${max - count}`;
     },
+    'btn.save': 'Save',
+    'msg.portSaved': 'Saved. Takes effect upon restart.',
   },
 };

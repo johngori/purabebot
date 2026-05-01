@@ -12,6 +12,7 @@ const restcnt = store.get("restcnt");
 var arrConfig = { username, token };
 var arrRoom = { roomname, roompass, playercnt, restcnt };
 let mainWindow = null;
+let portWindow = null;
 let signOutItem = null;
 
 ipcMain.on("asynchronous-message", (event, arg) => {
@@ -94,6 +95,44 @@ function buildMenu(lang) {
         { type: 'separator' },
         { role: 'quit', label: locale['menu.quit'] }
       ]
+    },
+    {
+      label: locale['menu.settings'],
+      submenu: [
+        {
+          label: locale['label.helpToggle'],
+          type: 'checkbox',
+          checked: store.get('tglHelp', true),
+          click: (menuItem) => {
+            store.set('tglHelp', menuItem.checked);
+            mainWindow.webContents.send('toggle-help', menuItem.checked);
+          }
+        },
+        {
+          label: locale['menu.portSettings'],
+          click: () => {
+            if (portWindow) {
+              portWindow.focus();
+              return;
+            }
+            portWindow = new BrowserWindow({
+              width: 350,
+              height: 200,
+              parent: mainWindow,
+              modal: true,
+              autoHideMenuBar: true,
+              icon: __dirname + "/icon.ico",
+              webPreferences: {
+                nodeIntegration: true,
+              }
+            });
+            portWindow.loadFile(path.join(__dirname, 'port.html'));
+            portWindow.on('closed', () => {
+              portWindow = null;
+            });
+          }
+        }
+      ]
     }
   ]);
   mainWindow.setMenu(menu);
@@ -104,9 +143,9 @@ const createWindow = () => {
     width: 750,
     minWidth: 750,
     maxWidth: 750,
-    height: 720,
-    minHeight: 720,
-    maxHeight: 720,
+    height: 650,
+    minHeight: 650,
+    maxHeight: 650,
     icon: __dirname + "/icon.ico",
     webPreferences: {
       nodeIntegration: true,
@@ -115,6 +154,8 @@ const createWindow = () => {
 
   buildMenu(store.get('language', 'ja'));
   mainWindow.loadFile(path.join(__dirname, "index.html"));
+
+  mainWindow.webContents.openDevTools()
 };
 
 app.on("ready", () => {

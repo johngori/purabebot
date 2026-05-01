@@ -52,7 +52,7 @@ const app = express();
 const server = require('http').createServer(app);
 const cron = require('node-cron');
 var io = require('socket.io')(server);
-const port = 3000;
+const port = new Store().get('port', 3000);
 
 app.use(express.json());
 app.use(express.static(__dirname + '/view'));
@@ -120,7 +120,7 @@ var open = false;
 var currentRestCnt = 0;
 var currentRestMembers = [];
 var restMemberQueue = [];
-var tglHelp = true;
+var tglHelp = new Store().get('tglHelp', true);
 var isQkCoolTime = false;
 var arrConfig = { 'username': '', 'token': '' };
 var arrRoom = { 'roomname': '', 'roompass': '', 'playercnt': '', 'restcnt': '' };
@@ -167,6 +167,10 @@ function addLog(message) {
     connectLog.appendChild(line);
     connectLog.scrollTop = connectLog.scrollHeight;
 }
+
+ipcRenderer.on('toggle-help', (event, checked) => {
+    tglHelp = checked;
+});
 
 ipcRenderer.send('asynchronous-message', 'getData');
 ipcRenderer.on('asynchronous-reply', (event, arg) => {
@@ -318,9 +322,6 @@ btnClose.onclick = function () {
     this.disabled = false;
 };
 
-function helpChange(checked) {
-    tglHelp = checked;
-}
 
 btnReset.onclick = function () {
     initRestMember();

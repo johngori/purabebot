@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title data-i18n="menu.portSettings">ポート設定</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; text-align: center; }
+    input { width: 100px; padding: 5px; margin: 10px; }
+    button { padding: 5px 15px; }
+  </style>
+</head>
+<body>
+  <div>
+    <label for="portInput" data-i18n="menu.portSettings">ポート番号</label>
+    <br>
+    <input type="number" id="portInput" min="1" max="65535">
+  </div>
+  <button id="saveBtn" data-i18n="btn.save">保存</button>
+  <p id="msg" style="color: green; font-size: 12px;"></p>
+
+  <script>
+    const Store = require('electron-store');
+    const { ipcRenderer } = require('electron');
+    const store = new Store();
+    const _lang = store.get('language', 'ja');
+    const _locales = require('./locales');
+    const locale = _locales[_lang] || _locales['ja'];
+
+    function t(key, ...args) {
+        const val = locale[key];
+        if (typeof val === 'function') return val(...args);
+        return val !== undefined ? val : key;
+    }
+
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        el.innerText = t(el.getAttribute('data-i18n'));
+    });
+
+    const portInput = document.getElementById('portInput');
+    const saveBtn = document.getElementById('saveBtn');
+    const msg = document.getElementById('msg');
+
+    portInput.value = store.get('port', 3000);
+
+    saveBtn.onclick = () => {
+      const p = parseInt(portInput.value);
+      if (p >= 1 && p <= 65535) {
+        store.set('port', p);
+        msg.innerText = t('msg.portSaved') || '保存しました。再起動後に反映されます。';
+        setTimeout(() => {
+            window.close();
+        }, 1500);
+      } else {
+        msg.innerText = '1〜65535の数値を入力してください。';
+        msg.style.color = 'red';
+      }
+    };
+  </script>
+</body>
+</html>
