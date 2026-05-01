@@ -3,6 +3,9 @@ const btnLoginTwitch = document.getElementById("btn-login-twitch");
 const form = document.getElementById('connect-form');
 const splashScreen = document.getElementById('splash-screen');
 const textError = document.getElementById("text-error");
+const logPanel = document.getElementById("log-panel");
+const logHeader = document.getElementById("log-header");
+const btnToggleLog = document.getElementById("btn-toggle-log");
 const connectLog = document.getElementById("connect-log");
 const serverUrl = document.getElementById("server-url");
 const btnShare = document.getElementById("btn-share");
@@ -92,6 +95,46 @@ var minMember;
 var maxMember;
 var joinable = false;
 var roomName = '';
+
+logHeader.onclick = function() {
+    logPanel.classList.toggle('hidden');
+    if (logPanel.classList.contains('hidden')) {
+        btnToggleLog.innerText = '▲ 表示';
+    } else {
+        btnToggleLog.innerText = '▼ 隠す';
+    }
+};
+
+function addLog(message) {
+    if (logPanel.style.display === "none") {
+        logPanel.style.display = "flex";
+        logPanel.classList.remove('hidden');
+        btnToggleLog.innerText = '▼ 隠す';
+    }
+    
+    const now = new Date();
+    const timeStr = now.getHours().toString().padStart(2, '0') + ':' + 
+                    now.getMinutes().toString().padStart(2, '0') + ':' + 
+                    now.getSeconds().toString().padStart(2, '0');
+    
+    const line = document.createElement('div');
+    line.className = 'log-line';
+    
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'log-time';
+    timeSpan.innerText = `[${timeStr}]`;
+    
+    const msgSpan = document.createElement('span');
+    msgSpan.innerText = message;
+    
+    line.appendChild(timeSpan);
+    line.appendChild(msgSpan);
+    
+    connectLog.appendChild(line);
+    connectLog.scrollTop = connectLog.scrollHeight;
+}
+
+var channelName = "";
 var password = '';
 var members = [];
 var open = false;
@@ -119,7 +162,7 @@ ipcRenderer.on('asynchronous-reply', (event, arg) => {
         
         btnLoginTwitch.disabled = true;
         document.getElementById("text-error").style.display = "none";
-        connectLog.innerText = "保存された情報で自動接続しています...";
+        addLog("保存された情報で自動接続しています...");
         connectTwitch(arrConfig.username, arrConfig.username, `oauth:${arrConfig.token}`);
     } else {
         splashScreen.style.display = "none";
@@ -154,14 +197,14 @@ const CLIENT_ID = process.env.TWITCH_CLIENT_ID;
 btnLoginTwitch.onclick = function() {
     this.disabled = true;
     document.getElementById("text-error").style.display = "none";
-    connectLog.innerText = "ブラウザでTwitch認証を行ってください...";
+    addLog("ブラウザでTwitch認証を行ってください...");
     
     const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=http://localhost:3000/auth&response_type=token&scope=chat:read+chat:edit`;
     shell.openExternal(authUrl);
 };
 
 function handleLoginSuccess(accessToken) {
-    connectLog.innerText = "ユーザー情報を取得しています...";
+    addLog("ユーザー情報を取得しています...");
     // Get User info from Twitch API
     fetch('https://api.twitch.tv/helix/users', {
         headers: {
@@ -185,7 +228,7 @@ function handleLoginSuccess(accessToken) {
         textError.style.display = "block";
         textError.innerHTML = "Twitchアカウント情報の取得に失敗しました。";
         btnLoginTwitch.disabled = false;
-        connectLog.innerText = "";
+        addLog("認証に失敗しました。");
     });
 }
 
@@ -307,7 +350,8 @@ btnAddMember.onclick = function() {
 
 
 // v1.3.1 モデレータ権限でも全ての制御を可能に変更
-function connectTwitch(botUserName, channelName, botOAuth){
+function connectTwitch(botUserName, connectChannel, botOAuth){
+    channelName = connectChannel;
 
     client = new tmi.Client({
         options: { debug: true, messagesLogLevel: "info" },
@@ -340,8 +384,7 @@ function connectTwitch(botUserName, channelName, botOAuth){
             splashScreen.style.display = "none";
             form.style.display="none";
             form.style.height="0";
-            connectLog.style.display = "block";
-            connectLog.innerText = channelName + "に接続しました。";
+            addLog(channelName + "に接続しました。");
             serverUrl.style.display = "block";
             serverUrl.innerText = "http://localhost:" + port + "/";
             btnShare.style.display = "block";

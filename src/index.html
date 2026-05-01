@@ -3,6 +3,9 @@
   <head>
     <meta charset="UTF-8">
     <title>ぷらべぼっと！</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+JP:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="index.css">
   </head>
   <body>
@@ -19,9 +22,13 @@
       </div>
     </div>
 
-    <div class="connect-log" id="connect-log"></div>
-    <button id="btn-share" disabled>ツイートで募集</button>
-    <div id="server-url">http://localhost:3000/</div>
+    <div class="log-panel hidden" id="log-panel" style="display: none;">
+      <div class="log-header" id="log-header">
+        <span class="log-title">システムログ</span>
+        <button id="btn-toggle-log" class="log-toggle-btn">▲ 表示</button>
+      </div>
+      <div class="connect-log" id="connect-log"></div>
+    </div>
     <div class="connect-contents" id="connect-contents">
 
       <div class="left-contents">
@@ -83,6 +90,10 @@
       </div>
 
       <div class="right-contents">
+        <div style="display: flex; gap: 10px; align-items: center; justify-content: flex-end; height: 33px; margin-bottom: 5px;">
+          <div id="server-url">http://localhost:3000/</div>
+          <button id="btn-share" disabled>ツイートで募集</button>
+        </div>
         <div class="member">
           <ul class="list-member" id="member-list">
           </ul>

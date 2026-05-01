@@ -45,20 +45,20 @@ const createWindow = () => {
     width: 750,
     minWidth: 750,
     maxWidth: 750,
-    height: 600,
-    minHeight: 600,
-    maxHeight: 600,
+    height: 700,
+    minHeight: 700,
+    maxHeight: 700,
     icon: __dirname + "/icon.ico",
     webPreferences: {
       nodeIntegration: true,
-      devTools: false,
+      devTools: true,
     },
   });
   //Menuバーの非表示
   mainWindow.setMenu(null);
   mainWindow.loadFile(path.join(__dirname, "index.html"));
   // Open the DevTools.
-  // mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools();
 };
 
 app.on("ready", () => {
