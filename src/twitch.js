@@ -25,6 +25,26 @@ const restMemberList = document.getElementById("rest-id");
 var restList = document.getElementById("rest-id").children;
 var liMenberList = document.getElementById("member-list").children;
 
+// i18n setup
+const Store = require('electron-store');
+const _lang = new Store().get('language', 'ja');
+const _locales = require('./locales');
+const locale = _locales[_lang] || _locales['ja'];
+
+function t(key, ...args) {
+    const val = locale[key];
+    if (typeof val === 'function') return val(...args);
+    return val !== undefined ? val : key;
+}
+
+function applyTranslations() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        el.innerText = t(el.getAttribute('data-i18n'));
+    });
+}
+
+applyTranslations();
+
 const { ipcRenderer } = require('electron');
 const { shell } = require('electron');
 const express = require('express');
@@ -116,14 +136,14 @@ updateInfo();
 
 logHeader.onclick = function () {
     logPanel.classList.toggle('hidden');
-    btnToggleLog.innerText = logPanel.classList.contains('hidden') ? '▲ 表示' : '▼ 隠す';
+    btnToggleLog.innerText = logPanel.classList.contains('hidden') ? t('log.show') : t('log.hide');
 };
 
 function addLog(message) {
     if (logPanel.style.display === "none") {
         logPanel.style.display = "flex";
         logPanel.classList.remove('hidden');
-        btnToggleLog.innerText = '▼ 隠す';
+        btnToggleLog.innerText = t('log.hide');
     }
 
     const now = new Date();
@@ -154,7 +174,7 @@ ipcRenderer.on('asynchronous-reply', (event, arg) => {
         arrConfig.username = arg['username'];
         arrConfig.token = arg['token'];
         btnLoginTwitch.disabled = true;
-        addLog("保存された情報で自動接続しています...");
+        addLog(t('log.autoConnecting'));
         connectTwitch(arrConfig.username, arrConfig.username, `oauth:${arrConfig.token}`);
     } else {
         splashScreen.style.display = "none";
@@ -200,25 +220,25 @@ ipcRenderer.on('sign-out', () => {
     form.style.height = "";
     btnLoginTwitch.disabled = false;
     btnRoom.disabled = false;
-    btnRoom.innerText = "部屋立て";
+    btnRoom.innerText = t('btn.createRoom');
     btnRefresh.disabled = true;
     btnClose.disabled = true;
-    btnClose.innerText = "受付終了";
+    btnClose.innerText = t('btn.closeAcceptance');
     btnShare.disabled = true;
     memberList.innerHTML = '';
     restMemberList.innerHTML = '';
-    addLog("サインアウトしました。");
+    addLog(t('log.signedOut'));
 });
 
 btnLoginTwitch.onclick = function () {
     this.disabled = true;
-    addLog("ブラウザでTwitch認証を行ってください...");
+    addLog(t('log.openingBrowser'));
     const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=http://localhost:3000/auth&response_type=token&scope=chat:read+chat:edit`;
     shell.openExternal(authUrl);
 };
 
 function handleLoginSuccess(accessToken) {
-    addLog("ユーザー情報を取得しています...");
+    addLog(t('log.fetchingUser'));
     fetch('https://api.twitch.tv/helix/users', {
         headers: {
             'Authorization': 'Bearer ' + accessToken,
@@ -232,13 +252,13 @@ function handleLoginSuccess(accessToken) {
                 arrConfig = { 'username': userLogin, 'token': accessToken };
                 connectTwitch(userLogin, userLogin, `oauth:${accessToken}`);
             } else {
-                throw new Error("ユーザー情報の取得に失敗しました");
+                throw new Error();
             }
         })
-        .catch(err => {
-            addLog("Twitchアカウント情報の取得に失敗しました。");
+        .catch(() => {
+            addLog(t('log.fetchUserError'));
             btnLoginTwitch.disabled = false;
-            addLog("認証に失敗しました。");
+            addLog(t('log.authFailed'));
         });
 }
 
@@ -255,13 +275,13 @@ btnRoom.onclick = function () {
             password = fmPass.value;
             client.say(channelName, openMatch(roomName, password, cntPlayer.value, cntRest.value));
             addMember(channelName);
-            addLog("受付を開始しました！");
+            addLog(t('log.roomOpened'));
             this.disabled = false;
-            this.innerText = "部屋削除";
+            this.innerText = t('btn.deleteRoom');
             btnRefresh.disabled = false;
             btnClose.disabled = false;
             btnShare.disabled = false;
-            btnClose.innerText = "受付終了";
+            btnClose.innerText = t('btn.closeAcceptance');
         } else {
             this.disabled = false;
             addLog(msg);
@@ -278,7 +298,7 @@ btnRefresh.onclick = function () {
         minMember = parseInt(cntPlayer.value);
         maxMember = minMember + parseInt(cntRest.value);
         io.emit('refresh', updateInfo());
-        addLog("更新しました。");
+        addLog(t('log.updated'));
         this.disabled = false;
     } else {
         addLog(msg);
@@ -290,10 +310,10 @@ btnClose.onclick = function () {
     this.disabled = true;
     if (info["joinable"]) {
         client.say(channelName, closeMatch());
-        this.innerText = "受付再開";
+        this.innerText = t('btn.reopenAcceptance');
     } else {
         client.say(channelName, restartMatch());
-        this.innerText = "受付終了";
+        this.innerText = t('btn.closeAcceptance');
     }
     this.disabled = false;
 };
@@ -312,14 +332,7 @@ btnNext.onclick = function () {
 };
 
 btnShare.onclick = function () {
-    var tweetText = 'ただいまプラべ募集中！';
-    if (info.members.length == info.maxMember) {
-        tweetText = 'ただいまプラべ満席です…%0A空き次第のご案内となります。';
-    } else if (info.members.length < info.minMember) {
-        tweetText += '@ ' + (info.minMember - info.members.length) + '～' + (info.maxMember - info.members.length);
-    } else {
-        tweetText += '休憩枠 @ ' + (info.maxMember - info.members.length);
-    }
+    var tweetText = t('tweet.body', info.members.length, info.minMember, info.maxMember);
     var url = '%0A%0Ahttps://www.twitch.tv/' + channelName;
     shell.openExternal('https://twitter.com/intent/tweet?text=' + tweetText + url + '&hashtags=ぷらべぼっと');
 };
@@ -359,11 +372,11 @@ function connectTwitch(botUserName, connectChannel, botOAuth) {
         form.style.display = "block";
         console.error(err);
         if (err == 'Invalid NICK.') {
-            addLog("Twitchアカウント情報を取得できませんでした。正しく入力されているか確認して下さい。");
+            addLog(t('log.invalidNick'));
         } else if (err == 'Improperly formatted auth') {
-            addLog("Twitch Chat OAuth Passwordを入力して下さい。");
+            addLog(t('log.badAuth'));
         } else if (err == 'Login authentication failed') {
-            addLog("認証に失敗しました。");
+            addLog(t('log.authFailed'));
         }
         btnLoginTwitch.disabled = false;
     }).then(function (token) {
@@ -371,7 +384,7 @@ function connectTwitch(botUserName, connectChannel, botOAuth) {
             splashScreen.style.display = "none";
             form.style.display = "none";
             form.style.height = "0";
-            addLog(channelName + "に接続しました。");
+            addLog(t('log.connected', channelName));
             serverUrl.style.display = "block";
             serverUrl.innerText = "http://localhost:" + port + "/";
             btnShare.style.display = "block";
@@ -408,13 +421,13 @@ function connectTwitch(botUserName, connectChannel, botOAuth) {
             case '!close':
                 if (tags.username === channelName || tags.mod) {
                     client.say(channel, closeMatch());
-                    btnClose.innerText = "受付再開";
+                    btnClose.innerText = t('btn.reopenAcceptance');
                 }
                 break;
             case '!restart':
                 if (tags.username === channelName || tags.mod) {
                     client.say(channel, restartMatch());
-                    btnClose.innerText = "受付終了";
+                    btnClose.innerText = t('btn.closeAcceptance');
                 }
                 break;
             case '!clear':
@@ -428,7 +441,7 @@ function connectTwitch(botUserName, connectChannel, botOAuth) {
                     if (!isQkCoolTime) {
                         isQkCoolTime = true;
                         nextRestMember();
-                        client.say(channel, `${tags.username} さんが休憩を回しました。`);
+                        client.say(channel, t('chat.rotated', tags.username));
                         setTimeout(() => {
                             isQkCoolTime = false;
                         }, 10000);
@@ -465,25 +478,25 @@ function addMember(user) {
     var message = '';
     if (members.find(element => element == user) === undefined && members.length < maxMember && joinable) {
         members.push(user);
-        message = '@' + user + ' さんの参加を受け付けました。';
+        message = t('chat.joinAccepted', user);
+        if (members.length < minMember) {
+            message += t('chat.joinNeedMore', minMember - members.length);
+        } else if (members.length >= minMember && members.length != maxMember) {
+            message += t('chat.joinCanJoinMore', maxMember - members.length);
+        }
         updateInfo();
         io.emit('add', user);
         setMemberList();
         connectLog.classList.remove("err");
-        if (members.length < minMember) {
-            message += 'あと' + (minMember - members.length) + '人集まればプラべ開始です。';
-        } else if (members.length >= minMember && members.length != maxMember) {
-            message += 'あと' + (maxMember - members.length) + '人まで参加可能です。';
-        }
     } else if (joinable === false) {
         connectLog.classList.add("err");
-        message = '現在プラべの参加を受け付けておりません。';
+        message = t('chat.joinClosed');
     } else if (members.find(element => element == user) !== undefined) {
         connectLog.classList.add("err");
-        message = '@' + user + ' さんは既に参加済みです。';
+        message = t('chat.joinAlready', user);
     } else {
         connectLog.classList.add("err");
-        message = 'ただいま満席となっております。しばらくお待ちください。';
+        message = t('chat.joinFull');
     }
     return message;
 }
@@ -492,12 +505,12 @@ function removeMember(user) {
     var message = '';
     if (members.find(element => element == user) !== undefined) {
         members = members.filter(n => n != user);
-        message = '@' + user + ' さんの参加を取り消しました。';
+        message = t('chat.leaveSuccess', user);
         setMemberList();
         removeUserRestQueue(user);
         io.emit('refresh', updateInfo());
     } else {
-        message = '@' + user + ' さんはまだ参加していません。';
+        message = t('chat.leaveNotFound', user);
     }
     return message;
 }
@@ -505,19 +518,19 @@ function removeMember(user) {
 function responseHelp() {
     if (joinable) {
         if (members.length === maxMember) {
-            return 'ただいま満席となっております。参加取消は「!leave」とチャットしてください。';
+            return t('chat.helpFull');
         }
-        return '参加は「!join」、参加取消は「!leave」とチャットしてください。';
+        return t('chat.helpOpen');
     } else {
-        return '現在プラべを開催していません。';
+        return t('chat.helpClosed');
     }
 }
 
 function openMatch(rn, pa, min, rest) {
     var message = '';
-    if (rn === undefined) return '部屋名を入力してください。';
+    if (rn === undefined) return t('chat.openNoRoom');
     if (joinable) {
-        message = '既に受付を開始しています。';
+        message = t('chat.openAlready');
     } else {
         open = true;
         joinable = true;
@@ -527,10 +540,10 @@ function openMatch(rn, pa, min, rest) {
         maxMember = minMember + parseInt(rest);
         if (pa === undefined || pa === "") {
             password = '';
-            message = 'プラべの受付を開始します！　部屋名：' + roomName + '、パス：なし　参加される方は「!join」、参加をキャンセルされる方は「!leave」と入力ください。';
+            message = t('chat.openSuccessNoPass', roomName);
         } else {
             password = pa;
-            message = 'プラべの受付を開始します！　部屋名：' + roomName + '、パス：' + password + '　参加される方は「!join」、参加をキャンセルされる方は「!leave」と入力ください。';
+            message = t('chat.openSuccessWithPass', roomName, password);
         }
         setMemberList();
         io.emit('refresh', updateInfo());
@@ -543,10 +556,10 @@ function openMatch(rn, pa, min, rest) {
 function closeMatch() {
     var message = '';
     if (!joinable) {
-        message = '受付を開始していません。';
+        message = t('chat.closeNotOpen');
     } else {
         joinable = false;
-        message = 'プラべの受付を終了します。ご参加ありがとうございました。';
+        message = t('chat.closeSuccess');
         io.emit('refresh', updateInfo());
     }
     return message;
@@ -555,10 +568,10 @@ function closeMatch() {
 function restartMatch() {
     var message = '';
     if (joinable) {
-        message = 'すでに受付を開始しています。';
+        message = t('chat.restartAlready');
     } else {
         joinable = true;
-        message = 'プラべの受付を再開します！部屋名：' + roomName + '、パス：' + password + '　参加される方は「!join」、参加をキャンセルされる方は「!leave」と入力ください。';
+        message = t('chat.restartSuccess', roomName, password);
         io.emit('refresh', updateInfo());
     }
     return message;
@@ -574,23 +587,23 @@ function initData() {
     setMemberList();
     connectLog.classList.remove("err");
     btnRoom.disabled = false;
-    btnRoom.innerText = "部屋立て";
+    btnRoom.innerText = t('btn.createRoom');
     btnRefresh.disabled = true;
     btnClose.disabled = true;
     btnShare.disabled = true;
-    btnClose.innerText = "受付終了";
-    return 'プラべの受付データを初期化しました。';
+    btnClose.innerText = t('btn.closeAcceptance');
+    return t('chat.initSuccess');
 }
 
 function displayRoom() {
     var message = '';
     if (!open) {
-        message = '受付を開始していません。';
+        message = t('chat.roomNotOpen');
     } else {
         if (info.password == '') {
-            message = '部屋名「' + info.roomName + '」、パスワードはありません。';
+            message = t('chat.roomInfoNoPass', info.roomName);
         } else {
-            message = '部屋名「' + info.roomName + '」、パスワード「' + info.password + '」';
+            message = t('chat.roomInfoWithPass', info.roomName, info.password);
         }
     }
     return message;
@@ -599,10 +612,10 @@ function displayRoom() {
 function setRoomName(rn) {
     var message = '';
     if (!open) {
-        message = '受付を開始していません。';
+        message = t('chat.renameNotOpen');
     } else {
         roomName = rn;
-        message = '部屋名を「' + roomName + '」に変更しました。';
+        message = t('chat.renameSuccess', roomName);
         io.emit('refresh', updateInfo());
     }
     return message;
@@ -611,10 +624,10 @@ function setRoomName(rn) {
 function setPassword(pa) {
     var message = '';
     if (!open) {
-        message = '受付を開始していません。';
+        message = t('chat.passwordNotOpen');
     } else {
         password = pa === undefined ? 'なし' : pa;
-        message = 'パスワードを「' + password + '」に変更しました。';
+        message = t('chat.passwordSuccess', password);
         io.emit('refresh', updateInfo());
     }
     return message;
@@ -632,16 +645,16 @@ function nextRestMember() {
 
 function roomCheck() {
     if (fmRoom.value == "") {
-        return "部屋名を入力してください。";
+        return t('validate.noRoomName');
     }
     if (cntPlayer.value == "") {
-        return "プレイ人数を入力してください。";
+        return t('validate.noPlayerCount');
     }
     if (!Number.isInteger(parseFloat(cntPlayer.value)) || parseFloat(cntPlayer.value) <= 0) {
-        return "プレイ人数には１以上の整数値を入力してください";
+        return t('validate.invalidPlayerCount');
     }
     if (!Number.isInteger(parseFloat(cntRest.value)) || parseFloat(cntRest.value) < 0) {
-        return "休憩枠には０以上の整数値を入力してください";
+        return t('validate.invalidRestSlots');
     }
     return "";
 }
@@ -664,11 +677,11 @@ function fncAddMember() {
     var addUserName = fmAddMember.value.trim();
     if (addUserName == "") {
         connectLog.classList.add("err");
-        connectLog.innerText = "追加する方の名前を入力してください。";
+        connectLog.innerText = t('validate.noAddName');
         return false;
     }
     var text = addMember(addUserName);
-    if (text.indexOf('参加を受け付けました') != -1) {
+    if (members.includes(addUserName)) {
         client.say(channelName, text);
         checkStart();
     } else {
@@ -730,9 +743,8 @@ function removeRestMember(user) {
 
 function checkStart() {
     if (members.length == minMember) {
-        var text = members.map(m => "@" + m).join(" ");
-        text += " お待たせしました。プラべが開催できますのでご準備お願いします！";
-        client.say(channelName, text);
+        var mentions = members.map(m => "@" + m).join(" ");
+        client.say(channelName, t('chat.startReady', mentions));
     }
 }
 

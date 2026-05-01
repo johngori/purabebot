@@ -15,18 +15,18 @@
 <body>
   <div id="setting">
     <div id="splash-screen" style="text-align: center; margin-top: 50px;">
-      <p style="margin-top: 20px; font-weight: bold; color: #666;">接続準備中...</p>
+      <p style="margin-top: 20px; font-weight: bold; color: #666;" data-i18n="splash.connecting">接続準備中...</p>
     </div>
 
     <div class="connect-form" id="connect-form" style="display: none;">
-      <button id="btn-login-twitch" class="twitch-btn">Twitchでログイン</button>
+      <button id="btn-login-twitch" class="twitch-btn" data-i18n="btn.login">Twitchでログイン</button>
     </div>
   </div>
 
   <div class="log-panel hidden" id="log-panel" style="display: none;">
     <div class="log-header" id="log-header">
-      <span class="log-title">システムログ</span>
-      <button id="btn-toggle-log" class="log-toggle-btn">▲ 表示</button>
+      <span class="log-title" data-i18n="log.title">システムログ</span>
+      <button id="btn-toggle-log" class="log-toggle-btn" data-i18n="log.show">▲ 表示</button>
     </div>
     <div class="connect-log" id="connect-log"></div>
   </div>
@@ -34,18 +34,18 @@
 
     <div class="left-contents">
       <div class="button-container" id="containts-info">
-        <button id="btn-room">部屋立て</button>
-        <button id="btn-refresh" disabled>更新</button>
-        <button id="btn-close" disabled>受付終了</button>
+        <button id="btn-room" data-i18n="btn.createRoom">部屋立て</button>
+        <button id="btn-refresh" disabled data-i18n="btn.refresh">更新</button>
+        <button id="btn-close" disabled data-i18n="btn.closeAcceptance">受付終了</button>
       </div>
       <div class="help-tgl">
         <label>
-          <input type="checkbox" name="tgl-help" checked="checked" onchange="helpChange(this.checked)"> helpを定期的にチャットする
+          <input type="checkbox" name="tgl-help" checked="checked" onchange="helpChange(this.checked)"> <span data-i18n="label.helpToggle">helpを定期的にチャットする</span>
         </label>
       </div>
       <div class="room-name">
         <div class="form-label">
-          <label for="fm-room-name">部屋名</label>
+          <label for="fm-room-name" data-i18n="label.roomName">部屋名</label>
         </div>
         <div class="form-input">
           <input type="text" id="fm-room-name" maxlength="20">
@@ -53,7 +53,7 @@
       </div>
       <div class="room-pass">
         <div class="form-label">
-          <label for="fm-room-pass">パスワード</label>
+          <label for="fm-room-pass" data-i18n="label.password">パスワード</label>
         </div>
         <div class="form-input">
           <input type="text" id="fm-room-pass" maxlength="20">
@@ -62,7 +62,7 @@
       <div class="player-count">
         <div class="play-count">
           <div class="form-label">
-            <label for="fm-play-count">プレイ人数</label>
+            <label for="fm-play-count" data-i18n="label.playerCount">プレイ人数</label>
           </div>
           <div class="form-input">
             <input type="number" min="1" max="10" value="6" id="fm-play-count">
@@ -70,7 +70,7 @@
         </div>
         <div class="rest-count">
           <div class="form-label">
-            <label for="fm-rest-count">休憩枠</label>
+            <label for="fm-rest-count" data-i18n="label.restSlots">休憩枠</label>
           </div>
           <div class="form-input">
             <input type="number" min="0" max="5" value="3" id="fm-rest-count">
@@ -78,14 +78,14 @@
         </div>
       </div>
       <div class="rest-member">
-        <p>休憩メンバー（メンバークリックで休憩をパス）</p>
+        <p data-i18n="label.restMembers">休憩メンバー（メンバークリックで休憩をパス）</p>
         <div class="list-container">
           <ul class="list-rest" id="rest-id">
           </ul>
         </div>
         <div class="button-container">
-          <button id="btn-init">リセット</button>
-          <button id="btn-next">次へ</button>
+          <button id="btn-init" data-i18n="btn.reset">リセット</button>
+          <button id="btn-next" data-i18n="btn.next">次へ</button>
         </div>
       </div>
     </div>
@@ -94,7 +94,7 @@
       <div
         style="display: flex; gap: 10px; align-items: center; justify-content: flex-end; height: 33px; margin-bottom: 5px;">
         <div id="server-url">http://localhost:3000/</div>
-        <button id="btn-share" disabled>ツイートで募集</button>
+        <button id="btn-share" disabled data-i18n="btn.tweet">ツイートで募集</button>
       </div>
       <div class="member">
         <ul class="list-member" id="member-list">
@@ -102,7 +102,7 @@
       </div>
       <div class="add-member">
         <input type="text" id="fm-add-member" maxlength="20">
-        <button id="btn-add">追加</button>
+        <button id="btn-add" data-i18n="btn.add">追加</button>
       </div>
     </div>
   </div>

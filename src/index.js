@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, Menu, MenuItem } = require("electron");
 const path = require("path");
 const Store = require("electron-store");
+const locales = require("./locales");
 const store = new Store();
 const username = store.get("username");
 const token = store.get("token");
@@ -43,6 +44,61 @@ if (require("electron-squirrel-startup")) {
   app.quit();
 }
 
+function buildMenu(lang) {
+  const locale = locales[lang] || locales['ja'];
+  const wasEnabled = signOutItem ? signOutItem.enabled : false;
+
+  signOutItem = new MenuItem({
+    label: locale['menu.signOut'],
+    enabled: wasEnabled,
+    click: () => {
+      store.delete("username");
+      store.delete("token");
+      arrConfig = { username: undefined, token: undefined };
+      signOutItem.enabled = false;
+      mainWindow.webContents.send('sign-out');
+    }
+  });
+
+  const menu = Menu.buildFromTemplate([
+    {
+      label: locale['menu.file'],
+      submenu: [
+        signOutItem,
+        { type: 'separator' },
+        {
+          label: locale['menu.language'],
+          submenu: [
+            {
+              label: '日本語',
+              type: 'radio',
+              checked: lang === 'ja',
+              click: () => {
+                store.set('language', 'ja');
+                buildMenu('ja');
+                mainWindow.reload();
+              }
+            },
+            {
+              label: 'English',
+              type: 'radio',
+              checked: lang === 'en',
+              click: () => {
+                store.set('language', 'en');
+                buildMenu('en');
+                mainWindow.reload();
+              }
+            }
+          ]
+        },
+        { type: 'separator' },
+        { role: 'quit', label: locale['menu.quit'] }
+      ]
+    }
+  ]);
+  mainWindow.setMenu(menu);
+}
+
 const createWindow = () => {
   mainWindow = new BrowserWindow({
     width: 750,
@@ -57,29 +113,7 @@ const createWindow = () => {
     },
   });
 
-  signOutItem = new MenuItem({
-    label: 'サインアウト',
-    enabled: false,
-    click: () => {
-      store.delete("username");
-      store.delete("token");
-      arrConfig = { username: undefined, token: undefined };
-      signOutItem.enabled = false;
-      mainWindow.webContents.send('sign-out');
-    }
-  });
-
-  const menu = Menu.buildFromTemplate([
-    {
-      label: 'ファイル',
-      submenu: [
-        signOutItem,
-        { type: 'separator' },
-        { role: 'quit', label: '終了' }
-      ]
-    }
-  ]);
-  mainWindow.setMenu(menu);
+  buildMenu(store.get('language', 'ja'));
   mainWindow.loadFile(path.join(__dirname, "index.html"));
 };
 
