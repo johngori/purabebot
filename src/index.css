@@ -211,9 +211,6 @@ button:disabled {
   display: none;
   background-color: #1DA1F2;
   color: white;
-  border: none;
-  padding: 6px 12px;
-  font-size: 12px;
 }
 
 #btn-share:hover:not(:disabled) {
@@ -329,7 +326,8 @@ button:disabled {
 
 .right-contents .member {
   overflow-y: auto;
-  height: 435px;
+  min-height: 475px;
+  margin-top: 5px;
 }
 
 ul {

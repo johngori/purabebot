@@ -51,14 +51,13 @@ const createWindow = () => {
     icon: __dirname + "/icon.ico",
     webPreferences: {
       nodeIntegration: true,
-      devTools: true,
     },
   });
   //Menuバーの非表示
   mainWindow.setMenu(null);
   mainWindow.loadFile(path.join(__dirname, "index.html"));
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 };
 
 app.on("ready", () => {
