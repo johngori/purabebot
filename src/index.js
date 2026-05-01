@@ -33,42 +33,7 @@ ipcMain.on("sendRoomInfo", (event, arg) => {
   store.set("restcnt", arg["restcnt"]);
 });
 
-ipcMain.on("login-twitch", (event, clientId) => {
-  const authWindow = new BrowserWindow({
-    width: 600,
-    height: 750,
-    show: false,
-    webPreferences: {
-      nodeIntegration: false
-    }
-  });
 
-  const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=http://localhost&response_type=token&scope=chat:read+chat:edit`;
-  authWindow.loadURL(authUrl);
-  authWindow.show();
-
-  const handleRedirect = (e, newUrl) => {
-    if (newUrl.startsWith('http://localhost')) {
-      if (e && e.preventDefault) e.preventDefault();
-      try {
-        const hash = new URL(newUrl).hash;
-        if (hash) {
-          const params = new URLSearchParams(hash.substring(1));
-          const accessToken = params.get('access_token');
-          if (accessToken) {
-            event.reply('login-twitch-success', accessToken);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to parse redirect URL", err);
-      }
-      authWindow.close();
-    }
-  };
-
-  authWindow.webContents.on('will-navigate', handleRedirect);
-  authWindow.webContents.on('will-redirect', handleRedirect);
-});
 
 if (require("electron-squirrel-startup")) {
   app.quit();

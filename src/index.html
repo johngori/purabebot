@@ -9,12 +9,13 @@
     <div id="setting">
       <div class="error-log" id="text-error">
       </div>
-      <div class="connect-form" id="connect-form">
+      
+      <div id="splash-screen" style="text-align: center; margin-top: 50px;">
+        <p style="margin-top: 20px; font-weight: bold; color: #666;">接続準備中...</p>
+      </div>
+
+      <div class="connect-form" id="connect-form" style="display: none;">
         <button id="btn-login-twitch" class="twitch-btn">Twitchでログイン</button>
-        <div id="saved-login-info" style="display: none; margin-top: 15px; text-align: center;">
-          <p style="font-size: 14px; margin-bottom: 5px;">前回のアカウント情報があります</p>
-          <button id="btn-connect-saved" class="twitch-btn-secondary">前回のアカウントで接続</button>
-        </div>
       </div>
     </div>
 

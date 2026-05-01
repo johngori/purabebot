@@ -1,8 +1,7 @@
 const btnLoginTwitch = document.getElementById("btn-login-twitch");
-const btnConnectSaved = document.getElementById("btn-connect-saved");
-const savedLoginInfo = document.getElementById("saved-login-info");
 
 const form = document.getElementById('connect-form');
+const splashScreen = document.getElementById('splash-screen');
 const textError = document.getElementById("text-error");
 const connectLog = document.getElementById("connect-log");
 const serverUrl = document.getElementById("server-url");
@@ -33,6 +32,62 @@ const server = require('http').createServer(app);
 const cron = require('node-cron');
 var io = require('socket.io')(server);
 const port = 3000;
+
+app.use(express.json());
+app.use(express.static(__dirname + '/view'));
+
+app.get('/auth', (req, res) => {
+  res.send(`
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Twitch認証</title>
+        <style>body{font-family:sans-serif; text-align:center; padding-top:50px;}</style>
+      </head>
+      <body>
+        <h2 id="msg">認証処理中です...</h2>
+        <p>このウィンドウは自動的に閉じます。</p>
+        <script>
+          const hash = window.location.hash;
+          if (hash) {
+            fetch('/auth-token', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ hash: hash })
+            }).then(() => {
+              document.getElementById('msg').innerText = '認証が完了しました！アプリに戻ってください。';
+              setTimeout(() => window.close(), 2000);
+            });
+          } else {
+            document.getElementById('msg').innerText = 'エラー: 認証トークンが見つかりません。';
+          }
+        </script>
+      </body>
+    </html>
+  `);
+});
+
+app.post('/auth-token', (req, res) => {
+  const hash = req.body.hash;
+  if (hash) {
+    const params = new URLSearchParams(hash.substring(1));
+    const accessToken = params.get('access_token');
+    if (accessToken) {
+      handleLoginSuccess(accessToken);
+      return res.sendStatus(200);
+    }
+  }
+  res.sendStatus(400);
+});
+
+io.on('connection', function(socket) {
+    io.emit('refresh', info);
+});
+
+server.listen(port, function(){
+    console.log('server listening. Port:' + port);
+});
+
 var minMember;
 var maxMember;
 var joinable = false;
@@ -61,7 +116,14 @@ ipcRenderer.on('asynchronous-reply', (event, arg) => {
     if (arg['username'] && arg['token']) {
         arrConfig.username = arg['username'];
         arrConfig.token = arg['token'];
-        savedLoginInfo.style.display = "block";
+        
+        btnLoginTwitch.disabled = true;
+        document.getElementById("text-error").style.display = "none";
+        connectLog.innerText = "保存された情報で自動接続しています...";
+        connectTwitch(arrConfig.username, arrConfig.username, `oauth:${arrConfig.token}`);
+    } else {
+        splashScreen.style.display = "none";
+        form.style.display = "block";
     }
 })
 
@@ -91,25 +153,14 @@ const CLIENT_ID = process.env.TWITCH_CLIENT_ID;
 
 btnLoginTwitch.onclick = function() {
     this.disabled = true;
-    btnConnectSaved.disabled = true;
     document.getElementById("text-error").style.display = "none";
-    connectLog.innerText = "Twitch認証画面を開いています...";
+    connectLog.innerText = "ブラウザでTwitch認証を行ってください...";
     
-    // Request OAuth flow from main process
-    ipcRenderer.send('login-twitch', CLIENT_ID);
+    const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=http://localhost:3000/auth&response_type=token&scope=chat:read+chat:edit`;
+    shell.openExternal(authUrl);
 };
 
-btnConnectSaved.onclick = function() {
-    this.disabled = true;
-    btnLoginTwitch.disabled = true;
-    document.getElementById("text-error").style.display = "none";
-    connectLog.innerText = "保存された情報で接続しています...";
-    
-    arrConfig = {'username': arrConfig.username, 'token': arrConfig.token};
-    connectTwitch(arrConfig.username, arrConfig.username, `oauth:${arrConfig.token}`);
-}
-
-ipcRenderer.on('login-twitch-success', (event, accessToken) => {
+function handleLoginSuccess(accessToken) {
     connectLog.innerText = "ユーザー情報を取得しています...";
     // Get User info from Twitch API
     fetch('https://api.twitch.tv/helix/users', {
@@ -129,13 +180,14 @@ ipcRenderer.on('login-twitch-success', (event, accessToken) => {
         }
     })
     .catch(err => {
+        splashScreen.style.display = "none";
+        form.style.display = "block";
         textError.style.display = "block";
         textError.innerHTML = "Twitchアカウント情報の取得に失敗しました。";
         btnLoginTwitch.disabled = false;
-        btnConnectSaved.disabled = false;
         connectLog.innerText = "";
     });
-});
+}
 
 //部屋立て、部屋削除
 //v1.1.0 部屋立て時、初期から自分を参加させるように変更
@@ -271,6 +323,8 @@ function connectTwitch(botUserName, channelName, botOAuth){
     });
     client.connect().catch(function(err){
         //エラー時処理
+        splashScreen.style.display = "none";
+        form.style.display = "block";
         textError.style.display = "block";
         console.error(err);
         if (err == 'Invalid NICK.') {
@@ -281,9 +335,9 @@ function connectTwitch(botUserName, channelName, botOAuth){
             textError.innerHTML = '認証に失敗しました。';
         }
         btnLoginTwitch.disabled = false;
-        btnConnectSaved.disabled = false;
     }).then(function(token){
         if(token !== undefined){
+            splashScreen.style.display = "none";
             form.style.display="none";
             form.style.height="0";
             connectLog.style.display = "block";
@@ -292,7 +346,6 @@ function connectTwitch(botUserName, channelName, botOAuth){
             serverUrl.innerText = "http://localhost:" + port + "/";
             btnShare.style.display = "block";
             connectContents.classList.add("on");
-            setServer();
             ipcRenderer.send('sendData', arrConfig);
         }
     });
@@ -672,18 +725,6 @@ function checkStart(){
     client.say(channelName, text);
 }
 //front
-function setServer(){
-    app.use(express.static(__dirname + '/view'));
-
-    io.on('connection',function(socket){
-        io.emit('refresh', info);
-    });
-
-    server.listen(port, function(){
-        console.log('server listening. Port:' + port);
-    })
-
-}
 
 //v1.2.0 10分毎にHELP実行
 //v1.2.1 15分毎に変更
