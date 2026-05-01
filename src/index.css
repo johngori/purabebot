@@ -7,31 +7,36 @@ label {
   font-size: 12px;
 }
 
-.connect-form input {
+.twitch-btn {
   width: 98%;
-}
-
-
-
-.auth-url {
-  text-align: right;
-  font-size: 12px;
-}
-
-.checkbox-container {
-  font-size: 12px;
-  align-items: baseline;
-}
-
-.auth-url p { 
-  margin: 0;
+  background-color: #9146FF;
+  color: white;
+  font-weight: bold;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
   cursor: pointer;
-  color: rgb(255, 158, 47);
-  text-decoration: underline;
+  font-size: 16px;
+  margin-top: 10px;
 }
 
-#btn-connect {
+.twitch-btn:hover {
+  background-color: #772CE8;
+}
+
+.twitch-btn-secondary {
   width: 98%;
+  background-color: #f0f0f0;
+  color: #333;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.twitch-btn-secondary:hover {
+  background-color: #e0e0e0;
 }
 
 .connect-form {

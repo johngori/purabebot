@@ -1,8 +1,7 @@
-const btConnect = document.getElementById("btn-connect");
-const fmBotName = document.getElementById("bot-name");
-const fmMyChannel = document.getElementById("channel-name");
-const fmOAuth = document.getElementById("oauth-pass");
-const pGetToken = document.getElementById("get-token");
+const btnLoginTwitch = document.getElementById("btn-login-twitch");
+const btnConnectSaved = document.getElementById("btn-connect-saved");
+const savedLoginInfo = document.getElementById("saved-login-info");
+
 const form = document.getElementById('connect-form');
 const textError = document.getElementById("text-error");
 const connectLog = document.getElementById("connect-log");
@@ -42,7 +41,7 @@ var password = '';
 var members = [];
 var open = false;
 var info = {open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers};
-var arrConfig = {'botname': '', 'mychannel': '', 'oauth': ''};
+var arrConfig = {'username': '', 'token': ''};
 var arrRoom = {'roomname': '', 'roompass': '', 'playercnt': '', 'restcnt': ''};
 const tmi = require('tmi.js');
 var client;
@@ -59,14 +58,10 @@ var isQkCoolTime = false;
 //ipcでconfig.jsonからデータ取得
 ipcRenderer.send('asynchronous-message', 'getData');
 ipcRenderer.on('asynchronous-reply', (event, arg) => {
-    if(arg['botname'] !== undefined){
-        fmBotName.value = arg['botname'];
-    }
-    if(arg['mychannel'] !== undefined){
-        fmMyChannel.value = arg['mychannel'];
-    }
-    if(arg['oauth'] !== undefined){
-        fmOAuth.value = arg['oauth'];
+    if (arg['username'] && arg['token']) {
+        arrConfig.username = arg['username'];
+        arrConfig.token = arg['token'];
+        savedLoginInfo.style.display = "block";
     }
 })
 
@@ -90,26 +85,57 @@ ipcRenderer.on('asynchronous-reply2', (event, arg) => {
     }
 })
 
-//トークン取得クリック処理
-pGetToken.onclick = function() {
-    urlopen('https://twitchapps.com/tmi/');
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
+const CLIENT_ID = process.env.TWITCH_CLIENT_ID;
+
+btnLoginTwitch.onclick = function() {
+    this.disabled = true;
+    btnConnectSaved.disabled = true;
+    document.getElementById("text-error").style.display = "none";
+    connectLog.innerText = "Twitch認証画面を開いています...";
+    
+    // Request OAuth flow from main process
+    ipcRenderer.send('login-twitch', CLIENT_ID);
+};
+
+btnConnectSaved.onclick = function() {
+    this.disabled = true;
+    btnLoginTwitch.disabled = true;
+    document.getElementById("text-error").style.display = "none";
+    connectLog.innerText = "保存された情報で接続しています...";
+    
+    arrConfig = {'username': arrConfig.username, 'token': arrConfig.token};
+    connectTwitch(arrConfig.username, arrConfig.username, `oauth:${arrConfig.token}`);
 }
 
-//接続ボタン処理
-btConnect.onclick = function() {
-    //ボタン無効化
-    this.disabled = true;
-    document.getElementById("text-error").style.display = "none";
-    fmBotName.setAttribute("disabled", true);
-    fmMyChannel.setAttribute("disabled", true);
-    fmOAuth.setAttribute("disabled", true);
-    //ipcでindex.jsにデータ送信
-    let botChannel = fmBotName.value.toLowerCase();
-    channelName = fmMyChannel.value.toLowerCase();
-    let authpass = fmOAuth.value;
-    arrConfig = {'botname': botChannel, 'mychannel': channelName, 'oauth': authpass}
-    connectTwitch(botChannel, channelName, authpass);
-};
+ipcRenderer.on('login-twitch-success', (event, accessToken) => {
+    connectLog.innerText = "ユーザー情報を取得しています...";
+    // Get User info from Twitch API
+    fetch('https://api.twitch.tv/helix/users', {
+        headers: {
+            'Authorization': 'Bearer ' + accessToken,
+            'Client-Id': CLIENT_ID
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data && data.data && data.data.length > 0) {
+            const userLogin = data.data[0].login.toLowerCase();
+            arrConfig = {'username': userLogin, 'token': accessToken};
+            connectTwitch(userLogin, userLogin, `oauth:${accessToken}`);
+        } else {
+            throw new Error("ユーザー情報の取得に失敗しました");
+        }
+    })
+    .catch(err => {
+        textError.style.display = "block";
+        textError.innerHTML = "Twitchアカウント情報の取得に失敗しました。";
+        btnLoginTwitch.disabled = false;
+        btnConnectSaved.disabled = false;
+        connectLog.innerText = "";
+    });
+});
 
 //部屋立て、部屋削除
 //v1.1.0 部屋立て時、初期から自分を参加させるように変更
@@ -254,18 +280,14 @@ function connectTwitch(botUserName, channelName, botOAuth){
         } else if (err == 'Login authentication failed'){
             textError.innerHTML = '認証に失敗しました。';
         }
-        btConnect.disabled = false;
-        fmBotName.removeAttribute("disabled");
-        fmMyChannel.removeAttribute("disabled");
-        fmOAuth.removeAttribute("disabled");
+        btnLoginTwitch.disabled = false;
+        btnConnectSaved.disabled = false;
     }).then(function(token){
         if(token !== undefined){
             form.style.display="none";
             form.style.height="0";
-            btConnect.style.display="none";
-            btConnect.style.height="0";
             connectLog.style.display = "block";
-            connectLog.innerText = arrConfig['mychannel'] + "に接続しました。";
+            connectLog.innerText = channelName + "に接続しました。";
             serverUrl.style.display = "block";
             serverUrl.innerText = "http://localhost:" + port + "/";
             btnShare.style.display = "block";

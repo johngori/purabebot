@@ -10,33 +10,12 @@
       <div class="error-log" id="text-error">
       </div>
       <div class="connect-form" id="connect-form">
-        
-        <div class="form-label">
-          <label for="channel-name">使用する配信チャンネル名（英数小文字のみ）</label>
+        <button id="btn-login-twitch" class="twitch-btn">Twitchでログイン</button>
+        <div id="saved-login-info" style="display: none; margin-top: 15px; text-align: center;">
+          <p style="font-size: 14px; margin-bottom: 5px;">前回のアカウント情報があります</p>
+          <button id="btn-connect-saved" class="twitch-btn-secondary">前回のアカウントで接続</button>
         </div>
-        <div class="form-input">
-          <input type="text" id="channel-name" placeholder="https://www.twitch.tv/[こちらの値]">
-        </div>
-
-        <div class="form-label">
-          <label for="bot-name">自分のチャンネル名 or 作成したボットのチャンネル名（トークンを取得したアカウントID）</label>
-        </div>
-        <div class="form-input">
-          <input type="text" id="bot-name">
-        </div>
-
-        <div class="form-label">
-          <label for="oauth-pass">Twitch Chat OAuth Password</label>
-        </div>
-        <div class="form-input">
-          <input type="password" placeholder="outh:xxxx~" id="oauth-pass">
-        </div>
-        <div class="auth-url">
-          <p id="get-token">トークンの取得</p>
-        </div>
-
       </div>
-      <button id="btn-connect">接続</button>
     </div>
 
     <div class="connect-log" id="connect-log"></div>
