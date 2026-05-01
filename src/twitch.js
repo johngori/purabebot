@@ -187,6 +187,30 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const CLIENT_ID = process.env.TWITCH_CLIENT_ID;
 
+ipcRenderer.on('sign-out', () => {
+    if (client) {
+        client.disconnect().catch(() => {});
+        client = undefined;
+    }
+    arrConfig = { username: '', token: '' };
+    channelName = '';
+    members = [];
+    open = false;
+    joinable = false;
+    connectContents.classList.remove("on");
+    form.style.display = "block";
+    form.style.height = "";
+    btnLoginTwitch.disabled = false;
+    btnRoom.disabled = false;
+    btnRoom.innerText = "部屋立て";
+    btnRefresh.disabled = true;
+    btnClose.disabled = true;
+    btnShare.disabled = true;
+    memberList.innerHTML = '';
+    restMemberList.innerHTML = '';
+    addLog("サインアウトしました。");
+});
+
 btnLoginTwitch.onclick = function () {
     this.disabled = true;
     addLog("ブラウザでTwitch認証を行ってください...");
@@ -375,6 +399,7 @@ function connectTwitch(botUserName, connectChannel, botOAuth) {
             btnShare.style.display = "block";
             connectContents.classList.add("on");
             ipcRenderer.send('sendData', arrConfig);
+            ipcRenderer.send('logged-in');
         }
     });
     client.on('message', (channel, tags, message, self) => {
@@ -758,7 +783,7 @@ function checkStart() {
 //v1.2.1 15分毎に変更
 //v1.2.1 helpのトグルボタン対応
 cron.schedule('*/15 * * * *', () => {
-    if (tglHelp && info.joinable) {
+    if (tglHelp && info.joinable && client) {
         client.say(channelName, responseHelp());
     }
 })

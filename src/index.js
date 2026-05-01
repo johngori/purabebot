@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, Menu, MenuItem } = require("electron");
 const path = require("path");
 const Store = require("electron-store");
 const store = new Store();
@@ -10,6 +10,8 @@ const playercnt = store.get("playercnt");
 const restcnt = store.get("restcnt");
 var arrConfig = { username, token };
 var arrRoom = { roomname, roompass, playercnt, restcnt };
+var mainWindow = null;
+var signOutItem = null;
 
 ipcMain.on("asynchronous-message", (event, arg) => {
   event.reply("asynchronous-reply", arrConfig);
@@ -25,6 +27,10 @@ ipcMain.on("asynchronous-message2", (event, arg) => {
   event.reply("asynchronous-reply2", arrRoom);
 });
 
+ipcMain.on("logged-in", () => {
+  if (signOutItem) signOutItem.enabled = true;
+});
+
 ipcMain.on("sendRoomInfo", (event, arg) => {
   event.reply("getRoomInfo", arrRoom);
   store.set("roomname", arg["roomname"]);
@@ -33,15 +39,12 @@ ipcMain.on("sendRoomInfo", (event, arg) => {
   store.set("restcnt", arg["restcnt"]);
 });
 
-
-
 if (require("electron-squirrel-startup")) {
   app.quit();
 }
 
 const createWindow = () => {
-  // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 750,
     minWidth: 750,
     maxWidth: 750,
@@ -53,11 +56,31 @@ const createWindow = () => {
       nodeIntegration: true,
     },
   });
-  //Menuバーの非表示
-  mainWindow.setMenu(null);
+
+  signOutItem = new MenuItem({
+    label: 'サインアウト',
+    enabled: false,
+    click: () => {
+      store.delete("username");
+      store.delete("token");
+      arrConfig = { username: undefined, token: undefined };
+      signOutItem.enabled = false;
+      mainWindow.webContents.send('sign-out');
+    }
+  });
+
+  const menu = Menu.buildFromTemplate([
+    {
+      label: 'ファイル',
+      submenu: [
+        signOutItem,
+        { type: 'separator' },
+        { role: 'quit', label: '終了' }
+      ]
+    }
+  ]);
+  mainWindow.setMenu(menu);
   mainWindow.loadFile(path.join(__dirname, "index.html"));
-  // Open the DevTools.
-  // mainWindow.webContents.openDevTools();
 };
 
 app.on("ready", () => {
