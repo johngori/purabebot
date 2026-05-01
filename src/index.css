@@ -11,9 +11,7 @@ label {
   width: 98%;
 }
 
-#tgl-rcon {
-  width: 20px;
-}
+
 
 .auth-url {
   text-align: right;
@@ -141,46 +139,6 @@ label {
 
 .rest-member p {
   margin: 0px;
-}
-
-.spectator-camera {
-  margin: 5px 0 0 0;
-}
-
-.spectator-camera>div {
-  margin-top: 5px;
-}
-
-.spectator-camera>div>button {
-  width: 83px;
-  margin-right: 10px;
-}
-
-.blue-side button {
-  background-color: aqua;
-}
-
-.orange-side button {
-  background-color: gold;
-}
-
-#spectator-exp {
-  display: flex;
-  align-items: baseline;
-}
-
-#spectator-exp p {
-  display: flex;
-  margin: 0 5px 0 0;
-}
-
-#spectator-exp div {
-  display: flex;
-  cursor: pointer;
-  margin: 0;
-  color: rgb(255, 158, 47);
-  text-decoration: underline;
-  font-size: 12px;
 }
 
 .list-container {

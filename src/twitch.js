@@ -2,14 +2,11 @@ const btConnect = document.getElementById("btn-connect");
 const fmBotName = document.getElementById("bot-name");
 const fmMyChannel = document.getElementById("channel-name");
 const fmOAuth = document.getElementById("oauth-pass");
-const fmRconPass = document.getElementById("rcon-pass")
-const tglRcon = document.getElementById("tgl-rcon")
 const pGetToken = document.getElementById("get-token");
 const form = document.getElementById('connect-form');
 const textError = document.getElementById("text-error");
 const connectLog = document.getElementById("connect-log");
 const serverUrl = document.getElementById("server-url");
-const pluginUrl = document.getElementById("plugin-url")
 const btnShare = document.getElementById("btn-share");
 const connectContents = document.getElementById("connect-contents");
 const btnRoom = document.getElementById("btn-room");
@@ -25,13 +22,6 @@ const btnAddMember = document.getElementById("btn-add");
 const btnNext = document.getElementById("btn-next");
 const btnReset = document.getElementById("btn-init");
 const restMemberList = document.getElementById("rest-id")
-const btnBlueInGoal = document.getElementById("blue-in-goal")
-const btnBlueLeftBack = document.getElementById("blue-left-back")
-const btnOrangeInGoal = document.getElementById("orange-in-goal")
-const btnOrangeLeftBack = document.getElementById("orange-left-back")
-const btnCenterHighSky = document.getElementById("center-high-sky")
-const btnCenterLowSky = document.getElementById("center-low-sky")
-const btnCenterCam = document.getElementById("center-cam")
 var restList = document.getElementById("rest-id").children
 var liMenberList = document.getElementById("member-list").children
 
@@ -52,7 +42,7 @@ var password = '';
 var members = [];
 var open = false;
 var info = {open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers};
-var arrConfig = {'botname': '', 'mychannel': '', 'oauth': '', 'rconpass':''};
+var arrConfig = {'botname': '', 'mychannel': '', 'oauth': ''};
 var arrRoom = {'roomname': '', 'roompass': '', 'playercnt': '', 'restcnt': ''};
 const tmi = require('tmi.js');
 var client;
@@ -64,110 +54,6 @@ var tglHelp = true;
 var isQkCoolTime = false;
 
 
-//RCON関連=====================================
-const SPECTATE_CAMERA_MODE = {
-    FLY_BALL: "SpectateSetCameraFlyBall",
-    FLY_NO_TARGET: "SpectateSetCameraFlyNoTarget",
-};
-
-const CAMERA_FOV = {
-    DEFAULT: "SpectateSetCameraFOV 60",
-    WIDE: "SpectateSetCameraFOV 100",
-};
-
-const cameraPlacePresets = {
-    blueInGoal: {
-        description: "ブルーゴール内",
-        pos: [10.584334, -5899.654785, 200.723129],
-        rot: [0.0, 0.0, 0.0],
-        fov: CAMERA_FOV.WIDE,
-        camera_mode: SPECTATE_CAMERA_MODE.FLY_BALL,
-    },
-    orangeInGoal: {
-        description: "オレンジゴール内",
-        pos: [16.639233, 5881.547852, 210.352936],
-        rot: [0.0, 0.0, 0.0],
-        fov: CAMERA_FOV.WIDE,
-        camera_mode: SPECTATE_CAMERA_MODE.FLY_BALL,
-    },
-    center: {
-        description: "真ん中",
-        pos: [-3593.823242, 6.488967, 403.777679],
-        rot: [0.0, 0.0, 0.0],
-        fov: CAMERA_FOV.DEFAULT,
-        camera_mode: SPECTATE_CAMERA_MODE.FLY_BALL,
-    },
-    blueLeftBack: {
-        description: "ブルー左後ろ",
-        pos: [3445.395508, -4409.955566, 253.91632],
-        rot: [0.0, 0.0, 0.0],
-        fov: CAMERA_FOV.DEFAULT,
-        camera_mode: SPECTATE_CAMERA_MODE.FLY_BALL,
-    },
-    orangeLeftBack: {
-        description: "オレンジ左後ろ",
-        pos: [-3167.162598, 4745.558006, 269.075203],
-        rot: [0.0, 0.0, 0.0],
-        fov: CAMERA_FOV.DEFAULT,
-        camera_mode: SPECTATE_CAMERA_MODE.FLY_BALL,
-    },
-    kickoffHighSky: {
-        description: "キックオフ上空",
-        pos: [-2822.076172, -1610.922119, 4676.012695],
-        rot: [-59.809569, 30.102538, 0.0],
-        fov: CAMERA_FOV.WIDE,
-        camera_mode: SPECTATE_CAMERA_MODE.FLY_NO_TARGET,
-    },
-    kickoffLowSky: {
-        description: "キックオフ低空",
-        pos: [-1480.37439, 1.962628, 44.586998],
-        rot: [0.0, 0.0, 0.0],
-        fov: CAMERA_FOV.DEFAULT,
-        camera_mode: SPECTATE_CAMERA_MODE.FLY_BALL,
-    },
-};
-
-
-// const RCON = new WebSocket("ws://localhost:9002");
-let RCON
-
-function ws_connect(){
-    RCON = new WebSocket("ws://localhost:9002");
-    RCON.onopen = function open() {
-        RCON.send(`rcon_password ${arrConfig.rconpass}`);
-        RCON.send("rcon_refresh_allowed");
-        RCON.send("replay_gui hud 0");
-        connectLog.classList.remove("err");
-        connectLog.innerText = "RCONへ接続しました。"
-    };
-
-    RCON.onerror = (err) => {
-        connectLog.classList.add("err");
-        connectLog.innerText = "RCONへ接続できません。"
-    };
-
-    RCON.onclose = (close) => {
-        ws_connect()
-    }
-}
-
-function setPosition(placeName) {
-    RCON.send("Spectate_EnableRestoration 0")
-    const targetPreset = cameraPlacePresets[placeName];
-    // カメラのモードをセットする
-    RCON.send(targetPreset.camera_mode);
-    //sleep
-    RCON.send('sleep 1')
-    // FOVをセットする
-    RCON.send(targetPreset.fov);
-    // カメラの位置をセットする
-    RCON.send(`SpectateSetCameraPosition ${targetPreset.pos.join(" ")}`);
-    if (targetPreset.camera_mode === SPECTATE_CAMERA_MODE.FLY_NO_TARGET) {
-        // カメラの角度をセットする
-        RCON.send(`SpectateSetCameraRotation ${targetPreset.rot.join(" ")}`);
-    }
-}
-//=====================================RCON関連
 
 
 //ipcでconfig.jsonからデータ取得
@@ -181,17 +67,6 @@ ipcRenderer.on('asynchronous-reply', (event, arg) => {
     }
     if(arg['oauth'] !== undefined){
         fmOAuth.value = arg['oauth'];
-    }
-    if(arg['rcon'] !== undefined) {
-        tglRcon.checked = arg['rcon']
-        if(arg['rcon']) {
-            fmRconPass.disabled = false
-        } else {
-            fmRconPass.disabled = true
-        }
-    }
-    if(arg['rconpass'] !== undefined){
-        fmRconPass.value = arg['rconpass']
     }
 })
 
@@ -228,15 +103,12 @@ btConnect.onclick = function() {
     fmBotName.setAttribute("disabled", true);
     fmMyChannel.setAttribute("disabled", true);
     fmOAuth.setAttribute("disabled", true);
-    fmRconPass.setAttribute("disabled", true);
     //ipcでindex.jsにデータ送信
     let botChannel = fmBotName.value.toLowerCase();
     channelName = fmMyChannel.value.toLowerCase();
     let authpass = fmOAuth.value;
-    let rconpass = fmRconPass.value;
-    let rconChk = tglRcon.checked;
-    arrConfig = {'botname': botChannel, 'mychannel': channelName, 'oauth': authpass, 'rcon': rconChk,'rconpass': rconpass}
-    connectTwitch(botChannel, channelName, authpass, rconChk);
+    arrConfig = {'botname': botChannel, 'mychannel': channelName, 'oauth': authpass}
+    connectTwitch(botChannel, channelName, authpass);
 };
 
 //部屋立て、部屋削除
@@ -304,14 +176,6 @@ btnClose.onclick = function() {
     this.disabled = false;
 }
 
-function rconCheck(checked) {
-    if(checked) {
-        fmRconPass.disabled = false
-    } else {
-        fmRconPass.disabled = true
-    }
-}
-
 //v1.2.1 ヘルプのチャットを自動投稿するかのチェックの確認
 function helpChange(checked) {
     tglHelp = checked;
@@ -327,36 +191,6 @@ btnReset.onclick = function() {
 //次へボタン処理
 btnNext.onclick = function() {
     nextRestMember();
-}
-
-//スペクテーターカメラ
-//青ゴール内
-btnBlueInGoal.onclick = function() {
-    setPosition("blueInGoal")
-}
-//青左後ろ
-btnBlueLeftBack.onclick = function() {
-    setPosition("blueLeftBack")
-}
-//橙ゴール内
-btnOrangeInGoal.onclick = function() {
-    setPosition("orangeInGoal")
-}
-//橙左後ろ
-btnOrangeLeftBack.onclick = function() {
-    setPosition("orangeLeftBack")
-}
-//中央上空
-btnCenterHighSky.onclick = function() {
-    setPosition("kickoffHighSky")
-}
-//中央低空
-btnCenterLowSky.onclick = function() {
-    setPosition("kickoffLowSky")
-}
-//中央カメラ
-btnCenterCam.onclick = function() {
-    setPosition("center")
 }
 
 //v1.2.0 ツイートで募集ボタン
@@ -379,10 +213,6 @@ serverUrl.onclick = function() {
     urlopen(this.innerText);
 }
 
-pluginUrl.onclick = function() {
-    urlopen("https://note.com/johngori/n/ne7dcd4773534")
-}
-
 //inputのEnter処理
 fmAddMember.onkeypress = (e) => {
     const key = e.keyCode || e.charCode || 0;
@@ -399,7 +229,7 @@ btnAddMember.onclick = function() {
 
 
 // v1.3.1 モデレータ権限でも全ての制御を可能に変更
-function connectTwitch(botUserName, channelName, botOAuth, isConnectRcon){
+function connectTwitch(botUserName, channelName, botOAuth){
 
     client = new tmi.Client({
         options: { debug: true, messagesLogLevel: "info" },
@@ -442,16 +272,6 @@ function connectTwitch(botUserName, channelName, botOAuth, isConnectRcon){
             connectContents.classList.add("on");
             setServer();
             ipcRenderer.send('sendData', arrConfig);
-            if(isConnectRcon) {
-                btnBlueInGoal.disabled = false
-                btnBlueLeftBack.disabled = false
-                btnOrangeInGoal.disabled = false
-                btnOrangeLeftBack.disabled = false
-                btnCenterHighSky.disabled = false
-                btnCenterLowSky.disabled = false
-                btnCenterCam.disabled = false
-                ws_connect();
-            }
         }
     });
     client.on('message', (channel, tags, message, self) => {
