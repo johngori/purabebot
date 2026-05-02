@@ -25,7 +25,7 @@ module.exports = {
     'menu.copyBrowserSourceUrl': 'ブラウザソースのURLをコピー',
     'menu.profile': 'プロフィール',
     'menu.signOut': 'サインアウト',
-    'menu.myTwitchPage': '自身のTwitchページへ',
+    'menu.myTwitchPage': 'あなたのTwitchチャンネルへ',
     'menu.quit': '終了',
     'menu.language': '言語',
     'menu.settings': '設定',
