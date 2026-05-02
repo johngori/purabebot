@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, Menu, MenuItem } = require("electron");
+const { app, BrowserWindow, ipcMain, Menu, MenuItem, shell, clipboard } = require("electron");
 const path = require("path");
 const Store = require("electron-store");
 const locales = require("./locales");
@@ -12,7 +12,7 @@ const restcnt = store.get("restcnt");
 var arrConfig = { username, token };
 var arrRoom = { roomname, roompass, playercnt, restcnt };
 let mainWindow = null;
-let portWindow = null;
+let advancedSettingsWindow = null;
 let signOutItem = null;
 
 ipcMain.on("asynchronous-message", (event, arg) => {
@@ -65,8 +65,37 @@ function buildMenu(lang) {
     {
       label: locale['menu.file'],
       submenu: [
-        signOutItem,
-        { type: 'separator' },
+        {
+          label: locale['menu.copyBrowserSourceUrl'],
+          click: () => {
+            const currentPort = store.get('port', 3000);
+            clipboard.writeText(`http://localhost:${currentPort}/`);
+            if (mainWindow) {
+              mainWindow.webContents.send('show-toast', locale['msg.copied']);
+            }
+          }
+        },
+        { role: 'quit', label: locale['menu.quit'] }
+      ]
+    },
+    {
+      label: locale['menu.profile'],
+      submenu: [
+        {
+          label: locale['menu.myTwitchPage'],
+          click: () => {
+            const currentUsername = store.get("username");
+            if (currentUsername) {
+              shell.openExternal(`https://twitch.tv/${currentUsername}`);
+            }
+          }
+        },
+        signOutItem
+      ]
+    },
+    {
+      label: locale['menu.settings'],
+      submenu: [
         {
           label: locale['menu.language'],
           submenu: [
@@ -93,12 +122,6 @@ function buildMenu(lang) {
           ]
         },
         { type: 'separator' },
-        { role: 'quit', label: locale['menu.quit'] }
-      ]
-    },
-    {
-      label: locale['menu.settings'],
-      submenu: [
         {
           label: locale['label.helpToggle'],
           type: 'checkbox',
@@ -109,15 +132,15 @@ function buildMenu(lang) {
           }
         },
         {
-          label: locale['menu.portSettings'],
+          label: locale['menu.advancedSettings'],
           click: () => {
-            if (portWindow) {
-              portWindow.focus();
+            if (advancedSettingsWindow) {
+              advancedSettingsWindow.focus();
               return;
             }
-            portWindow = new BrowserWindow({
-              width: 350,
-              height: 200,
+            advancedSettingsWindow = new BrowserWindow({
+              width: 750,
+              height: 600,
               parent: mainWindow,
               modal: true,
               autoHideMenuBar: true,
@@ -126,9 +149,9 @@ function buildMenu(lang) {
                 nodeIntegration: true,
               }
             });
-            portWindow.loadFile(path.join(__dirname, 'port.html'));
-            portWindow.on('closed', () => {
-              portWindow = null;
+            advancedSettingsWindow.loadFile(path.join(__dirname, 'advancedSettings.html'));
+            advancedSettingsWindow.on('closed', () => {
+              advancedSettingsWindow = null;
             });
           }
         }

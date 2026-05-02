@@ -6,7 +6,6 @@ const logPanel = document.getElementById("log-panel");
 const logHeader = document.getElementById("log-header");
 const btnToggleLog = document.getElementById("btn-toggle-log");
 const connectLog = document.getElementById("connect-log");
-const serverUrl = document.getElementById("server-url");
 const btnShare = document.getElementById("btn-share");
 const connectContents = document.getElementById("connect-contents");
 const btnRoom = document.getElementById("btn-room");
@@ -32,7 +31,18 @@ const _locales = require('./locales');
 const locale = _locales[_lang] || _locales['ja'];
 
 function t(key, ...args) {
-    const val = locale[key];
+    const customLocales = new Store().get('customLocales', {})[_lang] || {};
+    let val = customLocales[key];
+    
+    if (typeof val === 'string') {
+        let res = val;
+        for (let i = 0; i < args.length; i++) {
+            res = res.replace(new RegExp(`\\{${i}\\}`, 'g'), args[i]);
+        }
+        return res;
+    }
+
+    val = locale[key];
     if (typeof val === 'function') return val(...args);
     return val !== undefined ? val : key;
 }
@@ -129,7 +139,18 @@ var client;
 var info;
 
 function updateInfo() {
-    info = { open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers };
+    const browserLocales = {
+        recruiting: t('browser.recruiting'),
+        inGame: t('browser.inGame'),
+        helpJoinLeave: t('browser.helpJoinLeave'),
+        full: t('browser.full'),
+        helpLeave: t('browser.helpLeave'),
+        closed: t('browser.closed'),
+        standbyTitle: t('browser.standbyTitle'),
+        standbySub: t('browser.standbySub'),
+        restPrefix: t('browser.restPrefix')
+    };
+    info = { open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers, browserLocales };
     return info;
 }
 updateInfo();
@@ -170,6 +191,29 @@ function addLog(message) {
 
 ipcRenderer.on('toggle-help', (event, checked) => {
     tglHelp = checked;
+});
+
+ipcRenderer.on('show-toast', (event, message) => {
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.className = 'toast-container';
+        document.body.appendChild(toastContainer);
+    }
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerText = message;
+    toastContainer.appendChild(toast);
+    
+    // trigger reflow
+    void toast.offsetWidth;
+    toast.classList.add('show');
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 });
 
 ipcRenderer.send('asynchronous-message', 'getData');
@@ -338,10 +382,6 @@ btnShare.onclick = function () {
     shell.openExternal('https://twitter.com/intent/tweet?text=' + tweetText + url + '&hashtags=ぷらべぼっと');
 };
 
-serverUrl.onclick = function () {
-    shell.openExternal(this.innerText);
-};
-
 fmAddMember.onkeypress = (e) => {
     const key = e.keyCode || e.charCode || 0;
     if (key == 13) {
@@ -386,8 +426,6 @@ function connectTwitch(botUserName, connectChannel, botOAuth) {
             form.style.display = "none";
             form.style.height = "0";
             addLog(t('log.connected', channelName));
-            serverUrl.style.display = "block";
-            serverUrl.innerText = "http://localhost:" + port + "/";
             btnShare.style.display = "block";
             connectContents.classList.add("on");
             ipcRenderer.send('sendData', arrConfig);

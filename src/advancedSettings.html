@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title data-i18n="title.advancedSettings">詳細設定</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+JP:wght@400;600;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="index.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      background: var(--bg-color);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .layout {
+      display: flex;
+      width: 100%;
+      height: 100%;
+    }
+    .sidebar {
+      width: 200px;
+      background: rgba(0, 0, 0, 0.2);
+      border-right: 1px solid var(--panel-border);
+      padding: 20px 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .nav-item {
+      padding: 12px 20px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .nav-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+    }
+    .nav-item.active {
+      background: rgba(145, 70, 255, 0.15);
+      color: var(--twitch-purple-hover);
+      border-right: 3px solid var(--twitch-purple);
+    }
+    .main-content {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      box-sizing: border-box;
+    }
+    .content-section {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+    }
+    .content-section.active {
+      display: flex;
+    }
+    .header {
+      margin-bottom: 15px;
+    }
+    .header p {
+      color: var(--text-secondary);
+      font-size: 13px;
+      margin: 5px 0 0;
+    }
+    .settings-list {
+      flex: 1;
+      overflow-y: auto;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .form-group label {
+      color: var(--twitch-purple-hover);
+      font-size: 12px;
+      margin: 0;
+    }
+    .form-group input {
+      width: 100%;
+    }
+    .buttons {
+      display: flex;
+      gap: 10px;
+    }
+    .buttons button {
+      flex: 1;
+    }
+    #btnReset {
+      background-color: transparent;
+      border: 1px solid var(--danger-color);
+      color: var(--danger-color);
+    }
+    #btnReset:hover {
+      background-color: rgba(255, 79, 79, 0.1);
+    }
+    #btnSaveText {
+      background-color: var(--twitch-purple);
+      color: white;
+      border: none;
+    }
+    #btnSaveText:hover {
+      background-color: var(--twitch-purple-hover);
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <div class="sidebar">
+      <div class="nav-item active" id="nav-text" data-i18n="category.textSettings">文言設定</div>
+      <div class="nav-item" id="nav-port" data-i18n="category.portSettings">ポート設定</div>
+    </div>
+    
+    <div class="main-content">
+      
+      <!-- Text Settings -->
+      <div id="text-settings" class="content-section active">
+        <div class="header">
+          <h2 style="margin:0; font-size: 18px;" data-i18n="category.textSettings">文言設定</h2>
+          <p data-i18n="desc.advancedSettings">チャットに送信されるメッセージを変更できます。{0} や {1} は変数（ユーザー名など）に置き換わります。</p>
+        </div>
+        <div class="settings-list" id="settingsList"></div>
+        <div class="buttons">
+          <button id="btnReset" data-i18n="label.resetCustom">デフォルトに戻す</button>
+          <button id="btnSaveText" data-i18n="btn.save">保存</button>
+        </div>
+      </div>
+
+      <!-- Port Settings -->
+      <div id="port-settings" class="content-section">
+        <div class="header">
+          <h2 style="margin:0; font-size: 18px;" data-i18n="category.portSettings">ポート設定</h2>
+          <p>※変更後は再起動が必要です。</p>
+        </div>
+        <div style="background:var(--panel-bg); padding:20px; border-radius:8px; border:1px solid var(--panel-border); text-align:center; flex:none;">
+          <label for="portInput" data-i18n="category.portSettings" style="display:block; margin-bottom:10px; color:var(--text-secondary); font-size:13px; font-weight:600;">ポート番号</label>
+          <input type="number" id="portInput" min="1" max="65535" style="width:100%; margin-bottom:15px; text-align:center;">
+          <button id="btnSavePort" data-i18n="btn.save" style="width:100%; background-color:var(--twitch-purple); color:white; border:none; padding:12px; font-size:14px; border-radius:6px;">保存</button>
+          <p id="portMsg" style="margin-top:15px; font-size:13px; min-height:15px; margin-bottom:0;"></p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const Store = require('electron-store');
+    const store = new Store();
+    const _lang = store.get('language', 'ja');
+    const _locales = require('./locales');
+    const locale = _locales[_lang] || _locales['ja'];
+
+    function t(key) {
+        return locale[key] || key;
+    }
+
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        el.innerText = t(el.getAttribute('data-i18n'));
+    });
+
+    // Navigation logic
+    const navText = document.getElementById('nav-text');
+    const navPort = document.getElementById('nav-port');
+    const secText = document.getElementById('text-settings');
+    const secPort = document.getElementById('port-settings');
+
+    navText.onclick = () => {
+      navText.classList.add('active');
+      navPort.classList.remove('active');
+      secText.classList.add('active');
+      secPort.classList.remove('active');
+    };
+
+    navPort.onclick = () => {
+      navPort.classList.add('active');
+      navText.classList.remove('active');
+      secPort.classList.add('active');
+      secText.classList.remove('active');
+    };
+
+    // Text Settings Logic
+    const settingsList = document.getElementById('settingsList');
+    const allCustomLocales = store.get('customLocales', {});
+    const customLocales = allCustomLocales[_lang] || {};
+    const inputs = {};
+
+    function getDefaultString(key) {
+        const val = locale[key];
+        if (typeof val === 'function') {
+            return val('{0}', '{1}', '{2}', '{3}');
+        }
+        return val;
+    }
+
+    Object.keys(locale).forEach(key => {
+        if (key.startsWith('chat.') || key.startsWith('browser.')) {
+            const formGroup = document.createElement('div');
+            formGroup.className = 'form-group';
+            
+            const label = document.createElement('label');
+            label.innerText = key;
+            
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = customLocales[key] !== undefined ? customLocales[key] : getDefaultString(key);
+            input.placeholder = getDefaultString(key);
+            
+            inputs[key] = input;
+            
+            formGroup.appendChild(label);
+            formGroup.appendChild(input);
+            settingsList.appendChild(formGroup);
+        }
+    });
+
+    document.getElementById('btnReset').onclick = () => {
+        Object.keys(inputs).forEach(key => {
+            inputs[key].value = getDefaultString(key);
+        });
+    };
+
+    document.getElementById('btnSaveText').onclick = () => {
+        const newCustom = {};
+        Object.keys(inputs).forEach(key => {
+            const val = inputs[key].value.trim();
+            const def = getDefaultString(key);
+            if (val && val !== def) {
+                newCustom[key] = val;
+            }
+        });
+        
+        allCustomLocales[_lang] = newCustom;
+        store.set('customLocales', allCustomLocales);
+        
+        window.close();
+    };
+
+    // Port Settings Logic
+    const portInput = document.getElementById('portInput');
+    const btnSavePort = document.getElementById('btnSavePort');
+    const portMsg = document.getElementById('portMsg');
+
+    portInput.value = store.get('port', 3000);
+
+    btnSavePort.onclick = () => {
+      const p = parseInt(portInput.value);
+      if (p >= 1 && p <= 65535) {
+        store.set('port', p);
+        portMsg.innerText = t('msg.portSaved') || '保存しました。再起動後に反映されます。';
+        portMsg.style.color = 'var(--success-color)';
+      } else {
+        portMsg.innerText = '1〜65535の数値を入力してください。';
+        portMsg.style.color = 'var(--danger-color)';
+      }
+    };
+  </script>
+</body>
+</html>

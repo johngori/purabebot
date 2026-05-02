@@ -2,24 +2,47 @@ var txts = $('.text');
 var txtIndex = -1;
 var socketio = io();
 var min, max, mem;
+var browserLocales = {
+  recruiting: '参加者募集中 ＠{0}～{1}',
+  inGame: '対戦中！ ＠{0}',
+  helpJoinLeave: '参加 !join / 取消 !leave',
+  full: 'ただいま満席です…',
+  helpLeave: '取消 !leave',
+  closed: '受付終了しました。',
+  standbyTitle: 'ぷらべぼっと！',
+  standbySub: 'made by johngori',
+  restPrefix: '休憩 : {0}'
+};
+
+function formatString(str, ...args) {
+    if (!str) return '';
+    let res = str;
+    for (let i = 0; i < args.length; i++) {
+        res = res.replace(new RegExp(`\\{${i}\\}`, 'g'), args[i]);
+    }
+    return res;
+}
 
 txts.hide()
 showNextTxt();
 
 $(function(){
     socketio.on('refresh', function(info){
+      if (info.browserLocales) {
+        browserLocales = Object.assign(browserLocales, info.browserLocales);
+      }
+      
       if (info['open']) { //ぷらべぼっとを開いている
         $('.info').addClass('on');
-        // $('#status').text('参加者募集中！')
         min = info['minMember'];
         max = info['maxMember'];
         mem = info['members'].length;
         if (mem < min){
-          $('#text1').text('参加者募集中 ＠' + (min - mem) + '～' + (max - mem));
+          $('#text1').text(formatString(browserLocales.recruiting, min - mem, max - mem));
         } else {
-          $('#text1').text('対戦中！ ＠' + (max - mem));
+          $('#text1').text(formatString(browserLocales.inGame, max - mem));
         }
-        $('#text2').text('参加 !join / 取消 !leave');
+        $('#text2').text(browserLocales.helpJoinLeave);
         
         $('#status').addClass('open');
         $('#member').addClass('on');
@@ -29,23 +52,23 @@ $(function(){
           $('#member').append($('<li>'));
         }
         if (mem == max) {
-          $('#text1').text('ただいま満席です…');
-          $('#text2').text('取消 !leave');
+          $('#text1').text(browserLocales.full);
+          $('#text2').text(browserLocales.helpLeave);
           $('#status').addClass('full');
         } else {
           $('#status').removeClass('full');
         }
         if (info['joinable'] == false) {
           $('#status').removeClass('open');
-          $('#text1').text('受付終了しました。');
-          $('#text2').text('取消 !leave');
+          $('#text1').text(browserLocales.closed);
+          $('#text2').text(browserLocales.helpLeave);
           $('#status').addClass('close');
           $('.info').removeClass('on');
         }
       } else { //閉じてる
         $('.info').removeClass('on');
-        $('#text1').text('ぷらべぼっと！');
-        $('#text2').text('made by johngori');
+        $('#text1').text(browserLocales.standbyTitle);
+        $('#text2').text(browserLocales.standbySub);
         $('#status').removeClass('open');
         $('#status').removeClass('close');
         $('#member li').text('');
@@ -55,11 +78,10 @@ $(function(){
       }
       $.each($('#member').children('li'), function(index, li){
         if(info['members'][index] !== undefined){
-          var text = "";
-          text = info['members'][index]
+          var text = info['members'][index];
           $.each(info['currentRestMembers'], function(index, value){
             if(text == value){
-              text = '休憩 : ' + text
+              text = formatString(browserLocales.restPrefix, text);
             }
           });
           $('#member').children('li').eq(index).text(text);
@@ -85,16 +107,16 @@ $(function(){
       });
       mem++;
       if($('#member li:last').text() !== ''){
-        $('#text1').text('ただいま満席です…');
-        $('#text2').text('取消 !leave');
+        $('#text1').text(browserLocales.full);
+        $('#text2').text(browserLocales.helpLeave);
         $('#status').addClass('full');
       } else {
         if (mem < min){
-          $('#text1').text('参加者募集中 ＠' + (min - mem) + '～' + (max - mem));
+          $('#text1').text(formatString(browserLocales.recruiting, min - mem, max - mem));
         } else {
-          $('#text1').text('対戦中！ ＠' + (max - mem));
+          $('#text1').text(formatString(browserLocales.inGame, max - mem));
         }
-        $('#text2').text('参加 !join / 取消 !leave');
+        $('#text2').text(browserLocales.helpJoinLeave);
       }
     });
 });
