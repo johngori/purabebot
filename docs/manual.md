@@ -6,7 +6,7 @@
 このマニュアルは最新バージョンの内容のものとなります。
 
 ## インストール方法
-インストーラは[こちら](https://github.com/johngori/purabebot/releases/download/2.0.0/purabebot.Setup.2.0.0.exe)からダウンロードしてください。
+インストーラは[こちら](https://github.com/johngori/purabebot/releases/download/2.0.0/purabebot.Setup.2.0.1.exe)からダウンロードしてください。
 
 ダウンロードいただいたインストーラー（exeファイル）を実行してください。
 ※以下の画面が表示される場合、「**実行**」を選択してください。  
