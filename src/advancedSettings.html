@@ -212,7 +212,9 @@
     }
 
     Object.keys(locale).forEach(key => {
-        if (key.startsWith('chat.') || key.startsWith('browser.')) {
+        if ((key.startsWith('chat.') || key.startsWith('browser.')) && 
+            key !== 'browser.standbyTitle' && 
+            key !== 'browser.standbySub') {
             const formGroup = document.createElement('div');
             formGroup.className = 'form-group';
             

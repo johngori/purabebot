@@ -14,6 +14,7 @@ var arrRoom = { roomname, roompass, playercnt, restcnt };
 let mainWindow = null;
 let advancedSettingsWindow = null;
 let signOutItem = null;
+let myTwitchPageItem = null;
 
 ipcMain.on("asynchronous-message", (event, arg) => {
   event.reply("asynchronous-reply", arrConfig);
@@ -31,6 +32,7 @@ ipcMain.on("asynchronous-message2", (event, arg) => {
 
 ipcMain.on("logged-in", () => {
   if (signOutItem) signOutItem.enabled = true;
+  if (myTwitchPageItem) myTwitchPageItem.enabled = true;
 });
 
 ipcMain.on("sendRoomInfo", (event, arg) => {
@@ -57,7 +59,19 @@ function buildMenu(lang) {
       store.delete("token");
       arrConfig = { username: undefined, token: undefined };
       signOutItem.enabled = false;
+      if (myTwitchPageItem) myTwitchPageItem.enabled = false;
       mainWindow.webContents.send('sign-out');
+    }
+  });
+
+  myTwitchPageItem = new MenuItem({
+    label: locale['menu.myTwitchPage'],
+    enabled: wasEnabled,
+    click: () => {
+      const currentUsername = store.get("username");
+      if (currentUsername) {
+        shell.openExternal(`https://twitch.tv/${currentUsername}`);
+      }
     }
   });
 
@@ -81,15 +95,7 @@ function buildMenu(lang) {
     {
       label: locale['menu.profile'],
       submenu: [
-        {
-          label: locale['menu.myTwitchPage'],
-          click: () => {
-            const currentUsername = store.get("username");
-            if (currentUsername) {
-              shell.openExternal(`https://twitch.tv/${currentUsername}`);
-            }
-          }
-        },
+        myTwitchPageItem,
         signOutItem
       ]
     },
