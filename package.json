@@ -70,7 +70,8 @@
     "files": [
       "src",
       "package.json",
-      "package-lock.json"
+      "package-lock.json",
+      ".env"
     ],
     "win": {
       "icon": "src/icon.ico",
