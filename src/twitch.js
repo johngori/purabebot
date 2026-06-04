@@ -7,6 +7,9 @@ const logHeader = document.getElementById("log-header");
 const btnToggleLog = document.getElementById("btn-toggle-log");
 const connectLog = document.getElementById("connect-log");
 const btnShare = document.getElementById("btn-share");
+const btnHideRoom = document.getElementById("btn-hide-room");
+const btnEyeRoom = document.getElementById("btn-eye-room");
+const btnEyePass = document.getElementById("btn-eye-pass");
 const connectContents = document.getElementById("connect-contents");
 const btnRoom = document.getElementById("btn-room");
 const btnRefresh = document.getElementById("btn-refresh");
@@ -131,6 +134,8 @@ var currentRestCnt = 0;
 var currentRestMembers = [];
 var restMemberQueue = [];
 var tglHelp = new Store().get('tglHelp', true);
+var hideRoomInfo = new Store().get('hideRoomInfo', false);
+var senderUserId = '';
 var isQkCoolTime = false;
 var arrConfig = { 'username': '', 'token': '' };
 var arrRoom = { 'roomname': '', 'roompass': '', 'playercnt': '', 'restcnt': '' };
@@ -150,10 +155,27 @@ function updateInfo() {
         standbySub: t('browser.standbySub'),
         restPrefix: t('browser.restPrefix')
     };
-    info = { open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers, browserLocales };
+    info = { open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers, browserLocales, hideRoomInfo };
     return info;
 }
 updateInfo();
+
+function applyRoomInfoMask(masked) {
+    fmRoom.type = masked ? 'password' : 'text';
+    fmPass.type = masked ? 'password' : 'text';
+    btnEyeRoom.style.display = masked ? 'block' : 'none';
+    btnEyePass.style.display = masked ? 'block' : 'none';
+}
+
+btnEyeRoom.addEventListener('mousedown', () => { fmRoom.type = 'text'; });
+btnEyeRoom.addEventListener('mouseup', () => { if (hideRoomInfo) fmRoom.type = 'password'; });
+btnEyeRoom.addEventListener('mouseleave', () => { if (hideRoomInfo) fmRoom.type = 'password'; });
+
+btnEyePass.addEventListener('mousedown', () => { fmPass.type = 'text'; });
+btnEyePass.addEventListener('mouseup', () => { if (hideRoomInfo) fmPass.type = 'password'; });
+btnEyePass.addEventListener('mouseleave', () => { if (hideRoomInfo) fmPass.type = 'password'; });
+
+if (hideRoomInfo) applyRoomInfoMask(true);
 
 logHeader.onclick = function () {
     logPanel.classList.toggle('hidden');
@@ -223,7 +245,23 @@ ipcRenderer.on('asynchronous-reply', (event, arg) => {
         arrConfig.token = arg['token'];
         btnLoginTwitch.disabled = true;
         addLog(t('log.autoConnecting'));
-        connectTwitch(arrConfig.username, arrConfig.username, `oauth:${arrConfig.token}`);
+        fetch('https://id.twitch.tv/oauth2/validate', {
+            headers: { 'Authorization': 'OAuth ' + arg['token'] }
+        }).then(r => r.json()).then(data => {
+            if (!data.scopes || !data.scopes.includes('user:manage:whispers')) {
+                arrConfig = { username: '', token: '' };
+                ipcRenderer.send('sendData', arrConfig);
+                splashScreen.style.display = "none";
+                form.style.display = "block";
+                btnLoginTwitch.disabled = false;
+                addLog(t('log.reAuthRequired'));
+            } else {
+                senderUserId = data.user_id;
+                connectTwitch(arrConfig.username, arrConfig.username, `oauth:${arg['token']}`);
+            }
+        }).catch(() => {
+            connectTwitch(arrConfig.username, arrConfig.username, `oauth:${arg['token']}`);
+        });
     } else {
         splashScreen.style.display = "none";
         form.style.display = "block";
@@ -262,6 +300,7 @@ ipcRenderer.on('sign-out', () => {
     currentRestCnt = 0;
     currentRestMembers = [];
     isQkCoolTime = false;
+    senderUserId = '';
     io.emit('refresh', updateInfo());
     connectContents.classList.remove("on");
     form.style.display = "block";
@@ -281,7 +320,7 @@ ipcRenderer.on('sign-out', () => {
 btnLoginTwitch.onclick = function () {
     this.disabled = true;
     addLog(t('log.openingBrowser'));
-    const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=http://localhost:3000/auth&response_type=token&scope=chat:read+chat:edit`;
+    const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=http://localhost:3000/auth&response_type=token&scope=chat:read+chat:edit+user:manage:whispers`;
     shell.openExternal(authUrl);
 };
 
@@ -297,6 +336,7 @@ function handleLoginSuccess(accessToken) {
         .then(data => {
             if (data && data.data && data.data.length > 0) {
                 const userLogin = data.data[0].login.toLowerCase();
+                senderUserId = data.data[0].id;
                 arrConfig = { 'username': userLogin, 'token': accessToken };
                 connectTwitch(userLogin, userLogin, `oauth:${accessToken}`);
             } else {
@@ -382,6 +422,15 @@ btnShare.onclick = function () {
     shell.openExternal('https://twitter.com/intent/tweet?text=' + tweetText + url + '&hashtags=ぷらべぼっと');
 };
 
+btnHideRoom.onclick = function () {
+    hideRoomInfo = !hideRoomInfo;
+    new Store().set('hideRoomInfo', hideRoomInfo);
+    this.classList.toggle('active', hideRoomInfo);
+    this.innerText = t(hideRoomInfo ? 'btn.showRoomInfo' : 'btn.hideRoomInfo');
+    applyRoomInfoMask(hideRoomInfo);
+    io.emit('refresh', updateInfo());
+};
+
 fmAddMember.onkeypress = (e) => {
     const key = e.keyCode || e.charCode || 0;
     if (key == 13) {
@@ -426,6 +475,9 @@ function connectTwitch(botUserName, connectChannel, botOAuth) {
             form.style.display = "none";
             form.style.height = "0";
             addLog(t('log.connected', channelName));
+            btnHideRoom.style.display = "block";
+            btnHideRoom.classList.toggle('active', hideRoomInfo);
+            btnHideRoom.innerText = t(hideRoomInfo ? 'btn.showRoomInfo' : 'btn.hideRoomInfo');
             btnShare.style.display = "block";
             connectContents.classList.add("on");
             ipcRenderer.send('sendData', arrConfig);
@@ -437,14 +489,19 @@ function connectTwitch(botUserName, connectChannel, botOAuth) {
         if (self) return;
         switch (msg) {
             case '!j':
-            case '!join':
+            case '!join': {
+                const wasAlreadyMember = members.includes(tags.username);
                 if (members.length === minMember - 1) {
                     client.say(channel, addMember(tags.username));
                     checkStart();
                 } else {
                     client.say(channel, addMember(tags.username));
                 }
+                if (hideRoomInfo && !wasAlreadyMember && members.includes(tags.username)) {
+                    sendWhisper(tags.username, displayRoomWhisper());
+                }
                 break;
+            }
             case '!l':
             case '!leave':
                 client.say(channel, removeMember(tags.username));
@@ -455,7 +512,12 @@ function connectTwitch(botUserName, connectChannel, botOAuth) {
                 break;
             case '!r':
             case '!room':
-                client.say(channel, displayRoom());
+                if (hideRoomInfo && members.includes(tags.username)) {
+                    sendWhisper(tags.username, displayRoomWhisper());
+                    client.say(channel, t('chat.roomWhispered', tags.username));
+                } else {
+                    client.say(channel, hideRoomInfo ? t('chat.roomHiddenInfo') : displayRoom());
+                }
                 break;
             case '!close':
                 if (tags.username === channelName || tags.mod) {
@@ -579,10 +641,10 @@ function openMatch(rn, pa, min, rest) {
         maxMember = minMember + parseInt(rest);
         if (pa === undefined || pa === "") {
             password = '';
-            message = t('chat.openSuccessNoPass', roomName);
+            message = hideRoomInfo ? t('chat.openSuccessHidden') : t('chat.openSuccessNoPass', roomName);
         } else {
             password = pa;
-            message = t('chat.openSuccessWithPass', roomName, password);
+            message = hideRoomInfo ? t('chat.openSuccessHidden') : t('chat.openSuccessWithPass', roomName, password);
         }
         setMemberList();
         io.emit('refresh', updateInfo());
@@ -610,7 +672,7 @@ function restartMatch() {
         message = t('chat.restartAlready');
     } else {
         joinable = true;
-        message = t('chat.restartSuccess', roomName, password);
+        message = hideRoomInfo ? t('chat.restartSuccessHidden') : t('chat.restartSuccess', roomName, password);
         io.emit('refresh', updateInfo());
     }
     return message;
@@ -646,6 +708,48 @@ function displayRoom() {
         }
     }
     return message;
+}
+
+async function sendWhisper(toUsername, message) {
+    if (!senderUserId || !arrConfig.token) {
+        console.error('sendWhisper skipped: senderUserId=' + senderUserId + ' token=' + (arrConfig.token ? 'OK' : 'none'));
+        return;
+    }
+    try {
+        const userRes = await fetch(`https://api.twitch.tv/helix/users?login=${encodeURIComponent(toUsername)}`, {
+            headers: {
+                'Authorization': 'Bearer ' + arrConfig.token,
+                'Client-Id': CLIENT_ID
+            }
+        });
+        const userData = await userRes.json();
+        if (!userData.data || userData.data.length === 0) return;
+        const toUserId = userData.data[0].id;
+        const whisperRes = await fetch(`https://api.twitch.tv/helix/whispers?from_user_id=${senderUserId}&to_user_id=${toUserId}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + arrConfig.token,
+                'Client-Id': CLIENT_ID,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message })
+        });
+        if (!whisperRes.ok) {
+            const err = await whisperRes.text();
+            console.error('Whisper API error:', whisperRes.status, err);
+        }
+    } catch (err) {
+        console.error('sendWhisper failed:', err);
+    }
+}
+
+function displayRoomWhisper() {
+    if (!open) return null;
+    if (password == '') {
+        return t('chat.whisperRoomInfoNoPass', roomName);
+    } else {
+        return t('chat.whisperRoomInfoWithPass', roomName, password);
+    }
 }
 
 function setRoomName(rn) {

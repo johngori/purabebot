@@ -95,6 +95,9 @@ $(function(){
       } else {
         $('.info').removeClass("passoff");
       }
+      if (info['hideRoomInfo']) {
+        $('.info').removeClass('on');
+      }
     });
 
     socketio.on('add', function(user){

@@ -217,6 +217,21 @@ button:disabled {
   background-color: #1a91da;
 }
 
+#btn-hide-room {
+  display: none;
+}
+
+#btn-hide-room.active {
+  background-color: var(--twitch-purple);
+  color: white;
+  border-color: var(--twitch-purple);
+}
+
+#btn-hide-room.active:hover:not(:disabled) {
+  background-color: var(--twitch-purple-hover);
+  border-color: var(--twitch-purple-hover);
+}
+
 #server-url {
   cursor: pointer;
   color: var(--twitch-purple-hover);
@@ -370,6 +385,39 @@ li:last-child {
   color: var(--danger-color);
   font-size: 12px;
   font-weight: 600;
+}
+
+.input-reveal {
+  position: relative;
+}
+
+.input-reveal input {
+  padding-right: 36px;
+}
+
+.btn-eye {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 2px 4px;
+  display: none;
+  line-height: 1;
+}
+
+.btn-eye:hover:not(:disabled) {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  transform: translateY(-50%);
+}
+
+.btn-eye:active:not(:disabled) {
+  transform: translateY(-50%);
 }
 
 .add-member {
