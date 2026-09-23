@@ -121,12 +121,175 @@
     #btnSaveText:hover {
       background-color: var(--twitch-purple-hover);
     }
+    .mode-switcher {
+      display: inline-flex;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 6px;
+      padding: 3px;
+      gap: 4px;
+      margin-bottom: 6px;
+      width: fit-content;
+    }
+    .mode-btn {
+      padding: 5px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      border: none;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .mode-btn:hover {
+      color: var(--text-primary);
+    }
+    .mode-btn.active {
+      background: var(--twitch-purple);
+      color: #fff;
+    }
+    .text-config-box {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .size-selector {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-top: 4px;
+    }
+    .size-btn {
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      border: 1px solid var(--panel-border);
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.2);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .size-btn:hover {
+      color: var(--text-primary);
+      border-color: var(--twitch-purple-hover);
+    }
+    .size-btn.active {
+      background: var(--twitch-purple);
+      color: #fff;
+      border-color: var(--twitch-purple);
+    }
+    .preview-text-prefix {
+      display: inline-flex;
+      align-items: center;
+      line-height: 1;
+      margin-right: 6px;
+      font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', 'Sawarabi Gothic', sans-serif;
+    }
+    .preview-text-prefix.size-normal {
+      font-size: 20px;
+    }
+    .preview-text-prefix.size-large {
+      font-size: 26px;
+    }
+    .preview-text-prefix.size-xlarge {
+      font-size: 32px;
+    }
+    .image-config-box {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px dashed var(--panel-border);
+    }
+    .preview-box {
+      display: flex;
+      align-items: center;
+      background: rgba(2, 9, 119, 0.85);
+      color: rgb(255, 255, 236);
+      padding: 8px 16px;
+      border-radius: 8px;
+      height: 50px;
+      box-sizing: border-box;
+      border: 1px solid rgba(224, 224, 224, 0.5);
+      max-width: 360px;
+      font-family: 'Sawarabi Gothic', 'Noto Sans JP', sans-serif;
+    }
+    .preview-icon {
+      object-fit: contain;
+      margin-right: 8px;
+      flex-shrink: 0;
+      transition: height 0.2s, max-width 0.2s;
+    }
+    .preview-icon.size-normal {
+      height: 24px;
+      max-width: 36px;
+    }
+    .preview-icon.size-large {
+      height: 32px;
+      max-width: 48px;
+    }
+    .preview-icon.size-xlarge {
+      height: 38px;
+      max-width: 58px;
+    }
+    .preview-icon:not(.size-normal):not(.size-large):not(.size-xlarge) {
+      height: 32px;
+      max-width: 48px;
+    }
+    .preview-name {
+      font-size: 18px;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .image-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .btn-file-select {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--panel-border);
+      color: var(--text-primary);
+      padding: 6px 14px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    .btn-file-select:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    .btn-remove-icon {
+      background: transparent;
+      border: 1px solid var(--danger-color);
+      color: var(--danger-color);
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-remove-icon:hover {
+      background: rgba(255, 79, 79, 0.15);
+    }
+    .image-hint {
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
   </style>
 </head>
 <body>
   <div class="layout">
     <div class="sidebar">
       <div class="nav-item active" id="nav-text" data-i18n="category.textSettings">文言設定</div>
+      <div class="nav-item" id="nav-rest" data-i18n="category.restSettings">休憩設定</div>
       <div class="nav-item" id="nav-port" data-i18n="category.portSettings">ポート設定</div>
     </div>
     
@@ -142,6 +305,72 @@
         <div class="buttons">
           <button id="btnReset" data-i18n="label.resetCustom">デフォルトに戻す</button>
           <button id="btnSaveText" data-i18n="btn.save">保存</button>
+        </div>
+      </div>
+
+      <!-- Rest Settings -->
+      <div id="rest-settings" class="content-section">
+        <div class="header">
+          <h2 style="margin:0; font-size: 18px;" data-i18n="category.restSettings">休憩設定</h2>
+          <p data-i18n="desc.restSettings">OBS等のブラウザソースで休憩中メンバーに表示するアイコンや文言、サイズを設定できます。</p>
+        </div>
+        <div class="settings-list" style="gap: 16px;">
+          
+          <!-- Mode Switcher -->
+          <div class="form-group">
+            <label style="color:var(--text-secondary); font-size:13px; font-weight:600;">表示タイプ</label>
+            <div class="mode-switcher" id="restModeSwitcher">
+              <button type="button" class="mode-btn active" id="btnRestTextMode" data-i18n="label.modeText">テキスト</button>
+              <button type="button" class="mode-btn" id="btnRestImageMode" data-i18n="label.modeImage">画像・GIF</button>
+            </div>
+          </div>
+
+          <!-- Common Size Selector -->
+          <div class="form-group">
+            <label style="color:var(--text-secondary); font-size:13px; font-weight:600;" data-i18n="label.prefixSize">プレフィックス文字サイズ</label>
+            <div class="size-selector" id="restSizeSelector">
+              <button type="button" class="size-btn" data-size="normal" data-i18n="label.sizeNormal">標準 (30px)</button>
+              <button type="button" class="size-btn" data-size="large" data-i18n="label.sizeLarge">大きめ (38px)</button>
+              <button type="button" class="size-btn" data-size="xlarge" data-i18n="label.sizeXLarge">特大 (44px)</button>
+            </div>
+          </div>
+
+          <!-- Text Mode Section -->
+          <div id="restTextSection" class="text-config-box">
+            <div class="form-group">
+              <label for="restTextInput" style="color:var(--text-secondary); font-size:13px; font-weight:600;">プレフィックス文字列</label>
+              <input type="text" id="restTextInput" placeholder="☕ {0}">
+            </div>
+            <div>
+              <div style="font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:6px;" data-i18n="label.preview">プレビュー</div>
+              <div class="preview-box">
+                <span class="preview-text-prefix" id="restTextPreviewPrefix">☕ </span>
+                <span class="preview-name">TwitchUser</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Image Mode Section -->
+          <div id="restImageSection" class="image-config-box" style="display:none;">
+            <div class="image-hint" data-i18n="desc.restPrefixImage">OBS等のブラウザソースで休憩中メンバーの前に表示される画像またはGIF（アニメーション対応）です。</div>
+            <div class="image-actions">
+              <input type="file" id="restFileInput" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" style="display:none;">
+              <button type="button" class="btn-file-select" id="btnRestSelectImage" data-i18n="btn.selectImage">画像・GIFを選択</button>
+              <button type="button" class="btn-remove-icon" id="btnRestRemoveImage" data-i18n="btn.removeImage" style="display:none;">画像を解除</button>
+            </div>
+            <div>
+              <div style="font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:6px;" data-i18n="label.preview">プレビュー</div>
+              <div class="preview-box">
+                <img class="preview-icon" id="restImagePreviewImg" style="display:none;">
+                <span class="preview-name">TwitchUser</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div class="buttons">
+          <button id="btnResetRest" data-i18n="label.resetCustom">デフォルトに戻す</button>
+          <button id="btnSaveRest" data-i18n="btn.save" style="background-color: var(--twitch-purple); color: white; border: none;">保存</button>
         </div>
       </div>
 
@@ -163,6 +392,9 @@
   </div>
 
   <script>
+    const { ipcRenderer } = require('electron');
+    const fs = require('fs');
+    const path = require('path');
     const Store = require('electron-store');
     const store = new Store();
     const _lang = store.get('language', 'ja');
@@ -179,29 +411,22 @@
 
     // Navigation logic
     const navText = document.getElementById('nav-text');
+    const navRest = document.getElementById('nav-rest');
     const navPort = document.getElementById('nav-port');
     const secText = document.getElementById('text-settings');
+    const secRest = document.getElementById('rest-settings');
     const secPort = document.getElementById('port-settings');
 
-    navText.onclick = () => {
-      navText.classList.add('active');
-      navPort.classList.remove('active');
-      secText.classList.add('active');
-      secPort.classList.remove('active');
-    };
+    function switchTab(nav, sec) {
+      [navText, navRest, navPort].forEach(n => n.classList.remove('active'));
+      [secText, secRest, secPort].forEach(s => s.classList.remove('active'));
+      nav.classList.add('active');
+      sec.classList.add('active');
+    }
 
-    navPort.onclick = () => {
-      navPort.classList.add('active');
-      navText.classList.remove('active');
-      secPort.classList.add('active');
-      secText.classList.remove('active');
-    };
-
-    // Text Settings Logic
-    const settingsList = document.getElementById('settingsList');
-    const allCustomLocales = store.get('customLocales', {});
-    const customLocales = allCustomLocales[_lang] || {};
-    const inputs = {};
+    navText.onclick = () => switchTab(navText, secText);
+    navRest.onclick = () => switchTab(navRest, secRest);
+    navPort.onclick = () => switchTab(navPort, secPort);
 
     function getDefaultString(key) {
         const val = locale[key];
@@ -211,10 +436,20 @@
         return val;
     }
 
+    // ==========================================
+    // 1. Text Settings Logic (General Messages)
+    // ==========================================
+    const settingsList = document.getElementById('settingsList');
+    const allCustomLocales = store.get('customLocales', {});
+    const customLocales = allCustomLocales[_lang] || {};
+    const inputs = {};
+
     Object.keys(locale).forEach(key => {
         if ((key.startsWith('chat.') || key.startsWith('browser.')) && 
             key !== 'browser.standbyTitle' && 
-            key !== 'browser.standbySub') {
+            key !== 'browser.standbySub' && 
+            key !== 'browser.restPrefix') {
+            
             const formGroup = document.createElement('div');
             formGroup.className = 'form-group';
             
@@ -241,22 +476,205 @@
     };
 
     document.getElementById('btnSaveText').onclick = () => {
-        const newCustom = {};
+        const newCustom = Object.assign({}, customLocales);
         Object.keys(inputs).forEach(key => {
             const val = inputs[key].value.trim();
             const def = getDefaultString(key);
             if (val && val !== def) {
                 newCustom[key] = val;
+            } else {
+                delete newCustom[key];
             }
         });
         
         allCustomLocales[_lang] = newCustom;
         store.set('customLocales', allCustomLocales);
-        
+        ipcRenderer.send('settings-updated');
         window.close();
     };
 
-    // Port Settings Logic
+    // ==========================================
+    // 2. Rest Settings Logic (Dedicated Section)
+    // ==========================================
+    const userDataPath = path.dirname(store.path);
+    let currentRestPrefixType = store.get('browserRestPrefixType', 'text');
+    let currentRestPrefixTextSize = store.get('browserRestPrefixTextSize', 'large');
+    let selectedImageFilePath = null;
+    let removeExistingImage = false;
+
+    function getExistingIconPath() {
+        const ext = store.get('browserRestPrefixImageExt', 'png');
+        const iconPath = path.join(userDataPath, `custom_rest_icon.${ext}`);
+        if (fs.existsSync(iconPath)) {
+            return iconPath;
+        }
+        return null;
+    }
+
+    const btnRestTextMode = document.getElementById('btnRestTextMode');
+    const btnRestImageMode = document.getElementById('btnRestImageMode');
+    const restTextSection = document.getElementById('restTextSection');
+    const restImageSection = document.getElementById('restImageSection');
+    const restTextInput = document.getElementById('restTextInput');
+    const restTextPreviewPrefix = document.getElementById('restTextPreviewPrefix');
+    const restFileInput = document.getElementById('restFileInput');
+    const btnRestSelectImage = document.getElementById('btnRestSelectImage');
+    const btnRestRemoveImage = document.getElementById('btnRestRemoveImage');
+    const restImagePreviewImg = document.getElementById('restImagePreviewImg');
+    const sizeButtons = document.querySelectorAll('#restSizeSelector .size-btn');
+
+    // Init values
+    restTextInput.value = customLocales['browser.restPrefix'] !== undefined 
+        ? customLocales['browser.restPrefix'] 
+        : getDefaultString('browser.restPrefix');
+    restTextInput.placeholder = getDefaultString('browser.restPrefix');
+
+    function updateSizeButtons() {
+        sizeButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-size') === currentRestPrefixTextSize);
+        });
+    }
+
+    function updateModeDisplay() {
+        if (currentRestPrefixType === 'text') {
+            btnRestTextMode.classList.add('active');
+            btnRestImageMode.classList.remove('active');
+            restTextSection.style.display = 'flex';
+            restImageSection.style.display = 'none';
+            updateTextPreview();
+        } else {
+            btnRestImageMode.classList.add('active');
+            btnRestTextMode.classList.remove('active');
+            restTextSection.style.display = 'none';
+            restImageSection.style.display = 'flex';
+            updateImagePreview();
+        }
+    }
+
+    function updateTextPreview() {
+        const val = restTextInput.value !== '' ? restTextInput.value : getDefaultString('browser.restPrefix');
+        const parts = val.split('{0}');
+        const prefix = parts[0] !== undefined ? parts[0] : '';
+        restTextPreviewPrefix.innerText = prefix;
+        restTextPreviewPrefix.className = 'preview-text-prefix size-' + currentRestPrefixTextSize;
+    }
+
+    function updateImagePreview() {
+        let src = null;
+        if (selectedImageFilePath) {
+            src = selectedImageFilePath;
+        } else if (!removeExistingImage && getExistingIconPath()) {
+            src = getExistingIconPath() + '?t=' + Date.now();
+        }
+
+        restImagePreviewImg.className = 'preview-icon size-' + currentRestPrefixTextSize;
+        if (src) {
+            restImagePreviewImg.src = src;
+            restImagePreviewImg.style.display = 'inline-block';
+            btnRestRemoveImage.style.display = 'inline-block';
+        } else {
+            restImagePreviewImg.src = '';
+            restImagePreviewImg.style.display = 'none';
+            btnRestRemoveImage.style.display = 'none';
+        }
+    }
+
+    // Event listeners
+    btnRestTextMode.onclick = () => {
+        currentRestPrefixType = 'text';
+        updateModeDisplay();
+    };
+
+    btnRestImageMode.onclick = () => {
+        currentRestPrefixType = 'image';
+        updateModeDisplay();
+    };
+
+    sizeButtons.forEach(btn => {
+        btn.onclick = () => {
+            currentRestPrefixTextSize = btn.getAttribute('data-size');
+            updateSizeButtons();
+            updateTextPreview();
+            updateImagePreview();
+        };
+    });
+
+    restTextInput.oninput = updateTextPreview;
+
+    btnRestSelectImage.onclick = () => restFileInput.click();
+
+    restFileInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            selectedImageFilePath = file.path;
+            removeExistingImage = false;
+            updateImagePreview();
+        }
+    };
+
+    btnRestRemoveImage.onclick = () => {
+        selectedImageFilePath = null;
+        removeExistingImage = true;
+        restFileInput.value = '';
+        updateImagePreview();
+    };
+
+    document.getElementById('btnResetRest').onclick = () => {
+        currentRestPrefixType = 'text';
+        currentRestPrefixTextSize = 'large';
+        restTextInput.value = getDefaultString('browser.restPrefix');
+        selectedImageFilePath = null;
+        removeExistingImage = true;
+        restFileInput.value = '';
+        updateSizeButtons();
+        updateModeDisplay();
+    };
+
+    document.getElementById('btnSaveRest').onclick = () => {
+        store.set('browserRestPrefixType', currentRestPrefixType);
+        store.set('browserRestPrefixTextSize', currentRestPrefixTextSize);
+
+        if (currentRestPrefixType === 'image') {
+            if (selectedImageFilePath) {
+                const ext = path.extname(selectedImageFilePath).replace('.', '').toLowerCase() || 'png';
+                const destPath = path.join(userDataPath, `custom_rest_icon.${ext}`);
+                fs.copyFileSync(selectedImageFilePath, destPath);
+                store.set('browserRestPrefixImageExt', ext);
+                store.set('browserRestPrefixImageTime', Date.now());
+            } else if (removeExistingImage) {
+                const ext = store.get('browserRestPrefixImageExt', 'png');
+                const targetPath = path.join(userDataPath, `custom_rest_icon.${ext}`);
+                if (fs.existsSync(targetPath)) {
+                    try { fs.unlinkSync(targetPath); } catch (e) {}
+                }
+                store.delete('browserRestPrefixImageExt');
+                store.set('browserRestPrefixImageTime', Date.now());
+            }
+        } else {
+            // Text mode
+            const val = restTextInput.value.trim();
+            const def = getDefaultString('browser.restPrefix');
+            const newCustom = Object.assign({}, store.get('customLocales', {})[_lang] || {});
+            if (val && val !== def) {
+                newCustom['browser.restPrefix'] = val;
+            } else {
+                delete newCustom['browser.restPrefix'];
+            }
+            allCustomLocales[_lang] = newCustom;
+            store.set('customLocales', allCustomLocales);
+        }
+
+        ipcRenderer.send('settings-updated');
+        window.close();
+    };
+
+    // Initialize display
+    updateSizeButtons();
+    updateModeDisplay();
+
+    // ==========================================
+    // 3. Port Settings Logic
+    // ==========================================
     const portInput = document.getElementById('portInput');
     const btnSavePort = document.getElementById('btnSavePort');
     const portMsg = document.getElementById('portMsg');

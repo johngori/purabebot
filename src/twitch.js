@@ -60,6 +60,8 @@ applyTranslations();
 
 const { ipcRenderer } = require('electron');
 const { shell } = require('electron');
+const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const app = express();
 const server = require('http').createServer(app);
@@ -68,7 +70,27 @@ var io = require('socket.io')(server);
 const port = new Store().get('port', 3000);
 
 app.use(express.json());
-app.use(express.static(__dirname + '/view'));
+app.use(express.static(__dirname + '/view', {
+    etag: false,
+    maxAge: 0,
+    setHeaders: (res) => {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+    }
+}));
+
+app.get('/rest-icon', (req, res) => {
+    const storeInst = new Store();
+    const ext = storeInst.get('browserRestPrefixImageExt', 'png');
+    const userDataPath = path.dirname(storeInst.path);
+    const iconPath = path.join(userDataPath, `custom_rest_icon.${ext}`);
+    if (fs.existsSync(iconPath)) {
+        res.sendFile(iconPath);
+    } else {
+        res.sendStatus(404);
+    }
+});
 
 app.get('/auth', (req, res) => {
     res.send(`
@@ -115,7 +137,7 @@ app.post('/auth-token', (req, res) => {
 });
 
 io.on('connection', function (socket) {
-    io.emit('refresh', info);
+    socket.emit('refresh', updateInfo());
 });
 
 server.listen(port, function () {
@@ -144,6 +166,12 @@ var client;
 var info;
 
 function updateInfo() {
+    const storeInst = new Store();
+    const restPrefixType = storeInst.get('browserRestPrefixType', 'text');
+    const restPrefixTextSize = storeInst.get('browserRestPrefixTextSize', 'large');
+    const restPrefixImageTime = storeInst.get('browserRestPrefixImageTime', 0);
+    const restPrefixImageUrl = restPrefixType === 'image' ? `/rest-icon?t=${restPrefixImageTime}` : '';
+
     const browserLocales = {
         recruiting: t('browser.recruiting'),
         inGame: t('browser.inGame'),
@@ -153,12 +181,19 @@ function updateInfo() {
         closed: t('browser.closed'),
         standbyTitle: t('browser.standbyTitle'),
         standbySub: t('browser.standbySub'),
-        restPrefix: t('browser.restPrefix')
+        restPrefix: t('browser.restPrefix'),
+        restPrefixType: restPrefixType,
+        restPrefixTextSize: restPrefixTextSize,
+        restPrefixImageUrl: restPrefixImageUrl
     };
     info = { open, joinable, roomName, password, minMember, maxMember, members, currentRestMembers, browserLocales, hideRoomInfo };
     return info;
 }
 updateInfo();
+
+ipcRenderer.on('settings-updated', () => {
+    io.emit('refresh', updateInfo());
+});
 
 function applyRoomInfoMask(masked) {
     fmRoom.type = masked ? 'password' : 'text';
@@ -280,7 +315,6 @@ ipcRenderer.on('asynchronous-reply2', (event, arg) => {
     cntRest.value = Number.isInteger(parseInt(arg['restcnt'])) ? parseInt(arg['restcnt']) : 3;
 });
 
-const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const CLIENT_ID = process.env.TWITCH_CLIENT_ID;
 

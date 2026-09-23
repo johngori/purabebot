@@ -23,6 +23,39 @@ function formatString(str, ...args) {
     return res;
 }
 
+function renderMemberLi($li, memberName, isRest) {
+    $li.empty();
+    if (!memberName) return;
+
+    if (isRest) {
+        var prefixSizeClass = 'size-' + (browserLocales.restPrefixTextSize || 'large');
+        if (browserLocales.restPrefixType === 'image' && browserLocales.restPrefixImageUrl) {
+            var $img = $('<img>').addClass('rest-icon ' + prefixSizeClass).attr('src', browserLocales.restPrefixImageUrl);
+            var $name = $('<span>').addClass('member-name').text(memberName);
+            $li.append($img).append($name);
+        } else {
+            var formatStr = browserLocales.restPrefix || '☕ {0}';
+            var parts = formatStr.split('{0}');
+            var prefix = parts[0] !== undefined ? parts[0] : '';
+            var suffix = parts.length > 1 ? parts[1] : '';
+
+            if (prefix) {
+                var $prefix = $('<span>').addClass('rest-text-prefix ' + prefixSizeClass).text(prefix);
+                $li.append($prefix);
+            }
+            var $name = $('<span>').addClass('member-name').text(memberName);
+            $li.append($name);
+            if (suffix) {
+                var $suffix = $('<span>').addClass('rest-text-prefix ' + prefixSizeClass).text(suffix);
+                $li.append($suffix);
+            }
+        }
+    } else {
+        var $name = $('<span>').addClass('member-name').text(memberName);
+        $li.append($name);
+    }
+}
+
 txts.hide()
 showNextTxt();
 
@@ -71,21 +104,26 @@ $(function(){
         $('#text2').text(browserLocales.standbySub);
         $('#status').removeClass('open');
         $('#status').removeClass('close');
-        $('#member li').text('');
+        $('#member li').empty();
         $('#member li').removeClass('on');
         $('#member').height(0);
         $('#member').removeClass('on');
       }
       $.each($('#member').children('li'), function(index, li){
         if(info['members'][index] !== undefined){
-          var text = info['members'][index];
-          $.each(info['currentRestMembers'], function(index, value){
-            if(text == value){
-              text = formatString(browserLocales.restPrefix, text);
-            }
-          });
-          $('#member').children('li').eq(index).text(text);
-          requestAnimationFrame(()=>$(this).addClass('on'));
+          var memberName = info['members'][index];
+          var isRest = false;
+          if (info['currentRestMembers']) {
+            $.each(info['currentRestMembers'], function(i, value){
+              if(memberName == value){
+                isRest = true;
+                return false;
+              }
+            });
+          }
+          var $li = $(this);
+          renderMemberLi($li, memberName, isRest);
+          requestAnimationFrame(()=>$li.addClass('on'));
         }
       })
       $('#room-name').text(info['roomName']);
@@ -103,8 +141,9 @@ $(function(){
     socketio.on('add', function(user){
       $.each($('#member').children('li'), function(index, li){
         if ($(this).text() == ''){
-          $(this).text(user);
-          requestAnimationFrame(()=>$(this).addClass('on'));
+          var $li = $(this);
+          renderMemberLi($li, user, false);
+          requestAnimationFrame(()=>$li.addClass('on'));
           return false;
         }
       });

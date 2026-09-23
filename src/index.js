@@ -43,6 +43,12 @@ ipcMain.on("sendRoomInfo", (event, arg) => {
   store.set("restcnt", arg["restcnt"]);
 });
 
+ipcMain.on("settings-updated", () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("settings-updated");
+  }
+});
+
 if (require("electron-squirrel-startup")) {
   app.quit();
 }
