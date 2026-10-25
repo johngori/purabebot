@@ -152,14 +152,29 @@ function runInstallerAndQuit(installerPath) {
     throw new Error('Installer file not found: ' + installerPath);
   }
 
-  // Launch installer detached so it stays running after app quits
-  const child = spawn(installerPath, [], {
-    detached: true,
-    stdio: 'ignore'
-  });
-  child.unref();
+  const appExe = process.execPath;
+  const isPackaged = app.isPackaged;
 
-  // Quit current application
+  // NSISインストーラーをサイレント(/S)で実行し、画面を出さずにインストール
+  if (isPackaged) {
+    // インストーラーの完了を待って自動的にアプリを再起動
+    const cmd = `start /wait "" "${installerPath}" /S & start "" "${appExe}"`;
+    const child = spawn('cmd.exe', ['/c', cmd], {
+      detached: true,
+      stdio: 'ignore',
+      windowsVerbatimArguments: true
+    });
+    child.unref();
+  } else {
+    // 開発時のテスト: /S でウィザードをスキップして静かに更新
+    const child = spawn(installerPath, ['/S'], {
+      detached: true,
+      stdio: 'ignore'
+    });
+    child.unref();
+  }
+
+  // 現在のアプリを終了
   app.quit();
 }
 
