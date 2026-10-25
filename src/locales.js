@@ -130,6 +130,10 @@ module.exports = {
     'label.sizeXLarge': '特大 (44px)',
     'desc.restPrefixImage': 'OBS等のブラウザソースで休憩中メンバーの前に表示される画像またはGIF（アニメーション対応）です。',
     'browser.restPrefix': '☕ {0}',
+    'update.btnUpdate': (v) => `⚡ v${v} 更新`,
+    'update.downloading': (p) => `更新中... ${p}%`,
+    'update.install': '再起動して適用',
+    'update.error': '更新のダウンロードに失敗しました',
   },
 
   en: {
@@ -261,5 +265,9 @@ module.exports = {
     'label.sizeXLarge': 'Extra Large (44px)',
     'desc.restPrefixImage': 'Image or GIF (supports animation) displayed before resting members in browser sources like OBS.',
     'browser.restPrefix': '☕ {0}',
+    'update.btnUpdate': (v) => `⚡ Update to v${v}`,
+    'update.downloading': (p) => `Updating... ${p}%`,
+    'update.install': 'Restart to Apply',
+    'update.error': 'Failed to download update',
   },
 };

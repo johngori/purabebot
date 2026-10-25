@@ -56,10 +56,63 @@ function applyTranslations() {
     });
 }
 
+const { ipcRenderer, shell } = require('electron');
 applyTranslations();
 
-const { ipcRenderer } = require('electron');
-const { shell } = require('electron');
+// Titlebar Menus (Integrated Header)
+document.querySelectorAll('.titlebar-menu-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        const rect = btn.getBoundingClientRect();
+        const menuName = btn.getAttribute('data-menu');
+        ipcRenderer.send('show-menu', {
+            name: menuName,
+            x: rect.left,
+            y: rect.bottom + 2
+        });
+    });
+});
+
+// Update Badge in Titlebar (Next to Minimize button)
+const btnUpdateApp = document.getElementById('btn-update-app');
+const updateBadgeText = document.getElementById('update-badge-text');
+let isUpdating = false;
+let availableVersion = '';
+
+if (btnUpdateApp && updateBadgeText) {
+    ipcRenderer.on('update-available', (event, info) => {
+        availableVersion = info.latestVersion;
+        updateBadgeText.innerText = t('update.btnUpdate', info.latestVersion);
+        btnUpdateApp.style.display = 'inline-flex';
+    });
+
+    ipcRenderer.on('update-downloading', (event, percent) => {
+        isUpdating = true;
+        btnUpdateApp.classList.add('downloading');
+        updateBadgeText.innerText = t('update.downloading', percent);
+    });
+
+    ipcRenderer.on('update-downloaded', () => {
+        btnUpdateApp.classList.remove('downloading');
+        updateBadgeText.innerText = t('update.install');
+    });
+
+    ipcRenderer.on('update-error', (event, errMsg) => {
+        isUpdating = false;
+        btnUpdateApp.classList.remove('downloading');
+        updateBadgeText.innerText = t('update.btnUpdate', availableVersion);
+        alert(t('update.error') + (errMsg ? `\n${errMsg}` : ''));
+    });
+
+    btnUpdateApp.addEventListener('click', () => {
+        if (isUpdating) return;
+        isUpdating = true;
+        btnUpdateApp.classList.add('downloading');
+        updateBadgeText.innerText = t('update.downloading', 0);
+        ipcRenderer.send('start-update');
+    });
+}
+
+
 const path = require('path');
 const fs = require('fs');
 const express = require('express');

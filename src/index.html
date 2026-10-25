@@ -13,6 +13,30 @@
 </head>
 
 <body>
+  <div id="titlebar" class="titlebar">
+    <div class="titlebar-left">
+      <img src="icon.ico" class="titlebar-icon" alt="icon">
+      <span class="titlebar-title">ぷらべぼっと！</span>
+      <div class="titlebar-menus">
+        <button type="button" class="titlebar-menu-btn" data-menu="file" data-i18n="menu.file">ファイル</button>
+        <button type="button" class="titlebar-menu-btn" data-menu="profile" data-i18n="menu.profile">プロフィール</button>
+        <button type="button" class="titlebar-menu-btn" data-menu="settings" data-i18n="menu.settings">設定</button>
+      </div>
+    </div>
+    <div class="titlebar-right">
+      <button type="button" id="btn-update-app" class="update-badge" style="display: none;" title="最新バージョンが利用可能です">
+        <span class="update-badge-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </span>
+        <span class="update-badge-text" id="update-badge-text">v2.3.0 更新</span>
+      </button>
+    </div>
+  </div>
+
   <div id="setting">
     <div id="splash-screen" style="text-align: center; margin-top: 50px;">
       <p style="margin-top: 20px; font-weight: bold; color: #666;" data-i18n="splash.connecting">接続準備中...</p>

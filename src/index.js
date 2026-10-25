@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, Menu, MenuItem, shell, clipboard } = require("electron");
 const path = require("path");
 const Store = require("electron-store");
+Store.initRenderer();
 const locales = require("./locales");
 const store = new Store();
 const username = store.get("username");
@@ -53,6 +54,66 @@ if (require("electron-squirrel-startup")) {
   app.quit();
 }
 
+const updater = require("./updater");
+let fileMenu = null;
+let profileMenu = null;
+let settingsMenu = null;
+let currentUpdateInfo = null;
+
+async function checkUpdates() {
+  try {
+    const result = await updater.checkForUpdates();
+    if (result.hasUpdate && result.hasInstaller) {
+      currentUpdateInfo = result;
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send("update-available", result);
+      }
+    }
+  } catch (err) {
+    console.error("Update check error:", err);
+  }
+}
+
+ipcMain.on("check-for-updates", () => {
+  checkUpdates();
+});
+
+ipcMain.on("start-update", async () => {
+  if (!currentUpdateInfo || !currentUpdateInfo.downloadUrl) return;
+  try {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("update-downloading", 0);
+    }
+    const installerPath = await updater.downloadInstaller(
+      currentUpdateInfo.downloadUrl,
+      currentUpdateInfo.latestVersion,
+      (percent) => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send("update-downloading", percent);
+        }
+      }
+    );
+
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("update-downloaded", installerPath);
+    }
+    updater.runInstallerAndQuit(installerPath);
+  } catch (err) {
+    console.error("Update download error:", err);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("update-error", err.message);
+    }
+  }
+});
+
+ipcMain.on("show-menu", (event, { name, x, y }) => {
+  if (!mainWindow) return;
+  const targetMenu = name === "file" ? fileMenu : name === "profile" ? profileMenu : name === "settings" ? settingsMenu : null;
+  if (targetMenu) {
+    targetMenu.popup({ window: mainWindow, x: Math.round(x), y: Math.round(y) });
+  }
+});
+
 function buildMenu(lang) {
   const locale = locales[lang] || locales['ja'];
   const wasEnabled = signOutItem ? signOutItem.enabled : false;
@@ -81,93 +142,104 @@ function buildMenu(lang) {
     }
   });
 
-  const menu = Menu.buildFromTemplate([
+  const fileTemplate = [
     {
-      label: locale['menu.file'],
+      label: locale['menu.copyBrowserSourceUrl'],
+      click: () => {
+        const currentPort = store.get('port', 3000);
+        clipboard.writeText(`http://localhost:${currentPort}/`);
+        if (mainWindow) {
+          mainWindow.webContents.send('show-toast', locale['msg.copied']);
+        }
+      }
+    },
+    { role: 'quit', label: locale['menu.quit'] }
+  ];
+
+  const profileTemplate = [
+    myTwitchPageItem,
+    signOutItem
+  ];
+
+  const settingsTemplate = [
+    {
+      label: locale['menu.language'],
       submenu: [
         {
-          label: locale['menu.copyBrowserSourceUrl'],
+          label: '日本語',
+          type: 'radio',
+          checked: lang === 'ja',
           click: () => {
-            const currentPort = store.get('port', 3000);
-            clipboard.writeText(`http://localhost:${currentPort}/`);
-            if (mainWindow) {
-              mainWindow.webContents.send('show-toast', locale['msg.copied']);
-            }
-          }
-        },
-        { role: 'quit', label: locale['menu.quit'] }
-      ]
-    },
-    {
-      label: locale['menu.profile'],
-      submenu: [
-        myTwitchPageItem,
-        signOutItem
-      ]
-    },
-    {
-      label: locale['menu.settings'],
-      submenu: [
-        {
-          label: locale['menu.language'],
-          submenu: [
-            {
-              label: '日本語',
-              type: 'radio',
-              checked: lang === 'ja',
-              click: () => {
-                store.set('language', 'ja');
-                buildMenu('ja');
-                mainWindow.reload();
-              }
-            },
-            {
-              label: 'English',
-              type: 'radio',
-              checked: lang === 'en',
-              click: () => {
-                store.set('language', 'en');
-                buildMenu('en');
-                mainWindow.reload();
-              }
-            }
-          ]
-        },
-        { type: 'separator' },
-        {
-          label: locale['label.helpToggle'],
-          type: 'checkbox',
-          checked: store.get('tglHelp', true),
-          click: (menuItem) => {
-            store.set('tglHelp', menuItem.checked);
-            mainWindow.webContents.send('toggle-help', menuItem.checked);
+            store.set('language', 'ja');
+            buildMenu('ja');
+            mainWindow.reload();
           }
         },
         {
-          label: locale['menu.advancedSettings'],
+          label: 'English',
+          type: 'radio',
+          checked: lang === 'en',
           click: () => {
-            if (advancedSettingsWindow) {
-              advancedSettingsWindow.focus();
-              return;
-            }
-            advancedSettingsWindow = new BrowserWindow({
-              width: 750,
-              height: 600,
-              parent: mainWindow,
-              modal: true,
-              autoHideMenuBar: true,
-              icon: __dirname + "/icon.ico",
-              webPreferences: {
-                nodeIntegration: true,
-              }
-            });
-            advancedSettingsWindow.loadFile(path.join(__dirname, 'advancedSettings.html'));
-            advancedSettingsWindow.on('closed', () => {
-              advancedSettingsWindow = null;
-            });
+            store.set('language', 'en');
+            buildMenu('en');
+            mainWindow.reload();
           }
         }
       ]
+    },
+    { type: 'separator' },
+    {
+      label: locale['label.helpToggle'],
+      type: 'checkbox',
+      checked: store.get('tglHelp', true),
+      click: (menuItem) => {
+        store.set('tglHelp', menuItem.checked);
+        mainWindow.webContents.send('toggle-help', menuItem.checked);
+      }
+    },
+    {
+      label: locale['menu.advancedSettings'],
+      click: () => {
+        if (advancedSettingsWindow) {
+          advancedSettingsWindow.focus();
+          return;
+        }
+        advancedSettingsWindow = new BrowserWindow({
+          width: 750,
+          height: 600,
+          parent: mainWindow,
+          modal: true,
+          autoHideMenuBar: true,
+          icon: __dirname + "/icon.ico",
+          webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+          }
+        });
+        advancedSettingsWindow.loadFile(path.join(__dirname, 'advancedSettings.html'));
+        advancedSettingsWindow.on('closed', () => {
+          advancedSettingsWindow = null;
+        });
+      }
+    }
+  ];
+
+  fileMenu = Menu.buildFromTemplate(fileTemplate);
+  profileMenu = Menu.buildFromTemplate(profileTemplate);
+  settingsMenu = Menu.buildFromTemplate(settingsTemplate);
+
+  const menu = Menu.buildFromTemplate([
+    {
+      label: locale['menu.file'],
+      submenu: fileTemplate
+    },
+    {
+      label: locale['menu.profile'],
+      submenu: profileTemplate
+    },
+    {
+      label: locale['menu.settings'],
+      submenu: settingsTemplate
     }
   ]);
   mainWindow.setMenu(menu);
@@ -182,15 +254,26 @@ const createWindow = () => {
     minHeight: 650,
     maxHeight: 650,
     icon: __dirname + "/icon.ico",
+    titleBarStyle: 'hidden',
+    titleBarOverlay: {
+      color: '#0f0f13',
+      symbolColor: '#efefef',
+      height: 34
+    },
     webPreferences: {
       nodeIntegration: true,
+      contextIsolation: false,
     },
   });
 
   buildMenu(store.get('language', 'ja'));
   mainWindow.loadFile(path.join(__dirname, "index.html"));
 
-  mainWindow.webContents.openDevTools()
+  mainWindow.webContents.on("did-finish-load", () => {
+    checkUpdates();
+  });
+
+  // mainWindow.webContents.openDevTools()
 };
 
 app.on("ready", () => {

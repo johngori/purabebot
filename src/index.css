@@ -17,11 +17,169 @@
 
 body {
   margin: 0;
-  padding: 20px;
+  padding: 44px 20px 20px 20px;
   background-color: var(--bg-color);
   color: var(--text-primary);
   font-family: var(--font-family);
   user-select: none;
+}
+
+/* Titlebar (Integrated with titleBarOverlay) */
+.titlebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 34px;
+  background-color: var(--bg-color);
+  border-bottom: 1px solid var(--panel-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0;
+  z-index: 9999;
+  -webkit-app-region: drag;
+}
+
+.titlebar-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 10px;
+  height: 100%;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar-icon {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.titlebar-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-right: 6px;
+  letter-spacing: 0.5px;
+  pointer-events: none;
+}
+
+.titlebar-menus {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.titlebar-menu-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.titlebar-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+.titlebar-right {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  margin-right: 140px;
+  -webkit-app-region: no-drag;
+}
+
+/* Update Badge in Titlebar (Just to the left of Minimize button) */
+.update-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 10px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: inherit;
+  color: #ffffff;
+  background: linear-gradient(135deg, #9146FF 0%, #772ce8 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(145, 70, 255, 0.4);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: pulse-update 2.5s infinite;
+  white-space: nowrap;
+}
+
+.update-badge:hover {
+  background: linear-gradient(135deg, #a970ff 0%, #9146FF 100%);
+  box-shadow: 0 0 14px rgba(169, 112, 255, 0.6);
+  transform: translateY(-1px);
+}
+
+.update-badge:active {
+  transform: translateY(0);
+}
+
+.update-badge.downloading {
+  background: #2a2a35;
+  border-color: var(--twitch-purple);
+  box-shadow: none;
+  animation: none;
+  cursor: default;
+}
+
+.update-badge-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.update-badge-icon svg {
+  animation: bounce-icon 2s infinite ease-in-out;
+}
+
+.update-badge.downloading .update-badge-icon svg {
+  animation: spin-icon 1s infinite linear;
+}
+
+@keyframes pulse-update {
+  0% {
+    box-shadow: 0 0 0 0 rgba(145, 70, 255, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(145, 70, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(145, 70, 255, 0);
+  }
+}
+
+@keyframes bounce-icon {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes spin-icon {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Custom Scrollbar */

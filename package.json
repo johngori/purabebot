@@ -47,19 +47,19 @@
     "electron-squirrel-startup": "^1.0.0",
     "electron-store": "^7.0.0",
     "express": "^4.17.1",
-    "lzma-native": "^8.0.6",
     "node-cron": "^3.0.0",
+    "semver": "^7.8.5",
     "socket.io": "^3.1.0",
     "tmi.js": "^1.7.1"
   },
   "devDependencies": {
-    "@electron-forge/cli": "^6.0.0-beta.54",
-    "@electron-forge/maker-deb": "^6.0.0-beta.54",
-    "@electron-forge/maker-rpm": "^6.0.0-beta.54",
-    "@electron-forge/maker-squirrel": "^6.0.0-beta.54",
-    "@electron-forge/maker-zip": "^6.0.0-beta.54",
-    "electron": "11.2.1",
-    "electron-builder": "^22.14.5"
+    "@electron-forge/cli": "^8.0.1",
+    "@electron-forge/maker-deb": "^8.0.1",
+    "@electron-forge/maker-rpm": "^8.0.1",
+    "@electron-forge/maker-squirrel": "^8.0.1",
+    "@electron-forge/maker-zip": "^8.0.1",
+    "electron": "^45.0.0",
+    "electron-builder": "^26.18.0"
   },
   "build": {
     "productName": "purabebot",
